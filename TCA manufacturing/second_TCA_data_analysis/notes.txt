@@ -1,0 +1,24 @@
+
+First batch: self nucleated
+TCA resistance at initial length: 7.2 ohms
+TCA initial length: 20.3cm - 2.5cm = 17.8 cm
+
+400g, 1W power (power supply current 0.37A), free air - two trials
+    trial 1 - started at 12 sec
+    trial 2 - started at 
+400g, 3W power (power supply current 0.65A), free air - two trials
+200g bust trial
+400g, 3W power, forced air - two trials
+400g, 1W power, forced air - one trial, barely any movement
+
+
+Second batch: mandrel coiled. 40g unless stated otherwise
+TCA resistance at initial length: 8.5 ohms
+TCA initial length: 23cm - 2.5cm = 
+
+3W power (power supply current 0.59A), free air - two trials
+3W power, forced air - two trials
+1W power (power supply current 0.34A), free air - two trials
+1W power, forced air - canceled trial, barely any movement
+3W power, free air, 0g - one trial
+3W power (5.1V, 0.59A), free air, 20g - one trial

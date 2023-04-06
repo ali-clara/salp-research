@@ -46,7 +46,6 @@ void setup() {
   myStepper.setSpeed(maxSpeedLimit / 5.0);  // initial speed target
 
   start_pos = myStepper.currentPosition();
-  Serial.println("  ");
   Serial.print("Revolutions: ");
 }
 
@@ -86,3 +85,5 @@ void loop() {
 
   exit(0);
 }
+
+// longer mandrel = negative rotation
