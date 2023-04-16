@@ -22,13 +22,13 @@ m_w1_g40_2 = np.array(mandrel_data["40g_1w_free.1"])
 # 40g, mandrel-coiled, 3 watts, free convection
 m_w3_g40_1 = np.array(mandrel_data["40g_3w_free"])
 m_w3_g40_2 = np.array(mandrel_data["40g_3w_free.1"])
+# 40g, mandrel-coiled, 3 watts, forced convection
+m_w3_g40_fcd_1 = np.array(mandrel_data["40g_3w_forced"])
+m_w3_g40_fcd_2 = np.array(mandrel_data["40g_3w_forced.1"])
 # 20g, mandrel-coiled, 3 watts, free convection
 m_w3_g20 = np.array(mandrel_data["20g_3w_free"])
 # 0g, mandrel-coiled, 3 watts, free convection
 m_w3_g0 = np.array(mandrel_data["0g_3w_free"])
-
-self_coiled_arrays = [s_w1_g400_1, s_w1_g400_2, s_w3_g400_1, s_w3_g400_2]
-mandrel_coiled_arrays = [m_w1_g40_1, m_w1_g40_2, m_w3_g40_1, m_w3_g40_2]
 
 # adjust for initial length
 # start_pos = 2.5 # cm
@@ -45,6 +45,8 @@ m_w1_g40_1 = adjust_start_pos(m_w1_g40_1)
 m_w1_g40_2 = adjust_start_pos(m_w1_g40_2)
 m_w3_g40_1 = adjust_start_pos(m_w3_g40_1)
 m_w3_g40_2 = adjust_start_pos(m_w3_g40_2)
+m_w3_g40_fcd_1 = adjust_start_pos(m_w3_g40_fcd_1)
+m_w3_g40_fcd_2 = adjust_start_pos(m_w3_g40_fcd_2)
 m_w3_g20 = adjust_start_pos(m_w3_g20)
 m_w3_g0 = adjust_start_pos(m_w3_g0)
 
@@ -82,34 +84,47 @@ def get_data_to_plot(data_list):
 
     return disp_avg, disp_stdv, strain_avg, strain_stdv
 
-
 ### ------ Flight Code ------ ###
 s_w1_g400_disp_avg, s_w1_g400_disp_stdv, s_w1_g400_strain_avg, s_w1_g400_strain_stdv = get_data_to_plot([s_w1_g400_1, s_w1_g400_2])
 s_w3_g400_disp_avg, s_w3_g400_disp_stdv, s_w3_g400_strain_avg, s_w3_g400_strain_stdv = get_data_to_plot([s_w3_g400_1, s_w3_g400_2])
 
 m_w1_g40_disp_avg, m_w1_g40_disp_stdv, m_w1_g40_strain_avg, m_w1_g40_strain_stdv = get_data_to_plot([m_w1_g40_1, m_w1_g40_2])
 m_w3_g40_disp_avg, m_w3_g40_disp_stdv, m_w3_g40_strain_avg, m_w3_g40_strain_stdv = get_data_to_plot([m_w3_g40_1, m_w3_g40_2])
+m_w3_g40_fcd_disp_avg, m_w3_g40_fcd_disp_stdv, m_w3_g40_fcd_strain_avg, m_w3_g40_fcd_strain_stdv = get_data_to_plot([m_w3_g40_fcd_1, m_w3_g40_fcd_2])
 
 m_w3_g20_disp_avg, m_w3_g20_disp_stdv, m_w3_g20_strain_avg, m_w3_g20_strain_stdv = get_data_to_plot([m_w3_g20])
 m_w3_g0_disp_avg, m_w3_g0_disp_stdv, m_w3_g0_strain_avg, m_w3_g0_strain_stdv = get_data_to_plot([m_w3_g0])
 
-m_strain_avg = m_w1_g40_strain_avg
-m_strain_stdv = m_w1_g40_strain_stdv
-m_disp_avg = m_w1_g40_disp_avg
-m_disp_stdv = m_w1_g40_disp_stdv
-
-s_strain_avg = s_w1_g400_strain_avg
-s_strain_stdv = s_w1_g400_strain_stdv
-s_disp_avg = s_w1_g400_disp_avg
-s_disp_stdv = s_w1_g400_disp_stdv
-
+plt.style.use("seaborn")
 
 # plot 1: Mandrel coiled: 3W free, 1W free, 3W forced
+def do_plot_1():
+    fig, ax = plt.subplots(2,1)
+    # strain
+    ax[0].errorbar(t, m_w3_g40_strain_avg, yerr=m_w3_g40_strain_stdv, capsize=3, capthick=1, label="3W, free")
+    ax[0].errorbar(t, m_w3_g40_fcd_strain_avg, yerr=m_w3_g40_fcd_strain_stdv, capsize=3, capthick=1, label="3W, forced")
+    ax[0].errorbar(t, m_w1_g40_strain_avg, yerr=m_w1_g40_strain_stdv, capsize=3, capthick=1, label="1W, free")
+    ax[0].set_title("Strain vs Time")
+    ax[0].set_xlabel("Time (sec)")
+    ax[0].set_ylabel("Strain")
+    ax[0].set_title("Mandrel Coiled TCA Strain Response to a 0.05Hz Square Wave with 40g load")
+    ax[0].legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
+    # displacement
+    ax[1].errorbar(t, m_w3_g40_disp_avg, yerr=m_w3_g40_disp_stdv, capsize=3, capthick=1, label="3W, free")
+    ax[1].errorbar(t, m_w3_g40_fcd_disp_avg, yerr=m_w3_g40_fcd_disp_stdv, capsize=3, capthick=1, label="3W, forced")
+    ax[1].errorbar(t, m_w1_g40_disp_avg, yerr=m_w1_g40_disp_stdv, capsize=3, capthick=1, label="1W, free")
+    ax[1].set_title("Mandrel Coiled TCA Position Response to a 0.05Hz Square Wave with 40g load")
+    ax[1].set_xlabel("Time (sec)")
+    ax[1].set_ylabel("Position (cm)")
+
+    plt.gca().invert_yaxis()
+    plt.tight_layout()
+    plt.savefig("40g_varying_amp")
+    plt.show()
+
 
 # plot 2: Mandrel coiled: 40g, 20g, 0g
 def do_plot_2():
-
-    plt.style.use("seaborn")
     fig, ax = plt.subplots(2,1)
     # strain
     ax[0].errorbar(t, m_w3_g40_strain_avg, yerr=m_w3_g40_strain_stdv, capsize=3, capthick=1, label="40 grams")
@@ -130,10 +145,10 @@ def do_plot_2():
 
     plt.gca().invert_yaxis()
     plt.tight_layout()
-    plt.savefig("3W_varying_load")
+    # plt.savefig("3W_varying_load")
     plt.show()
 
-do_plot_2()
+do_plot_1()
 
 
 

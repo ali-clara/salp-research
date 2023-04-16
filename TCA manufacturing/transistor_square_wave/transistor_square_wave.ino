@@ -1,4 +1,4 @@
-int pulse_length = 10 * 1000; // ms
+int pulse_length = 30 * 1000; // ms
 int output_pin = 12;
 
 void setup() {

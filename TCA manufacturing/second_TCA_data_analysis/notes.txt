@@ -22,3 +22,8 @@ TCA initial length: 23cm - 2.5cm =
 1W power, forced air - canceled trial, barely any movement
 3W power, free air, 0g - one trial
 3W power (5.1V, 0.59A), free air, 20g - one trial
+
+
+Third batch: mandrel coiled, 40g, 3W power (power supply current 0.59A)
+
+step response (30 sec on, 30 sec off) - one trial, coil was unwinding (TCA 2)
