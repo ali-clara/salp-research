@@ -39,12 +39,15 @@ const int maxSpeedLimit = 1000.0;  // set this to the maximum speed you want to 
 int buttonPressed = 0;
 int start_pos;
 
+int steps;
+
 void setup() {
   Serial.begin(115200);
   // set the maximum speed and initial speed.
   myStepper.setMaxSpeed(maxSpeedLimit);
   myStepper.setSpeed(maxSpeedLimit / 5.0);  // initial speed target
 
+  steps = 0;
   start_pos = myStepper.currentPosition();
   Serial.print("Revolutions: ");
 }
@@ -71,7 +74,7 @@ void loop() {
       myStepper.setSpeed((float)motorSpeed);
     }
     myStepper.runSpeed();
-    // steps_taken = steps_taken + 1 ;
+    steps = steps + 1 ;
 
     if (digitalRead(buttonPin) == HIGH) {
       buttonPressed = 1;
@@ -81,9 +84,12 @@ void loop() {
   myStepper.stop();
   myStepper.run();
 
-  Serial.print((myStepper.currentPosition() - start_pos) / steps_per_rev);
+  //Serial.print((myStepper.currentPosition() - start_pos) / steps_per_rev);
+  Serial.print(steps / steps_per_rev);
 
+  steps = 0;
   exit(0);
 }
 
-// longer mandrel = negative rotation
+// 4/21 - 92cm, 1:45 at max pot speed
+

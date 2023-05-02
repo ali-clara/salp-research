@@ -1,13 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import control
 
 ### ------ Data Parsing ------ ###
 
 mandrel_data = pd.read_csv("data-collection_mandrel-coiled.csv")
 nucleated_data = pd.read_csv("data-collection_self-coiled.csv")
+step_data = pd.read_csv("data-collection_mandrel-step-response.csv")
 
 t = np.array(mandrel_data["t"])
+t_step = np.array(step_data["t"])
 
 # 400g, self-coiled, 1 watt, free convection
 s_w1_g400_1 = np.array(nucleated_data["400g_1w_free"])
@@ -30,6 +33,8 @@ m_w3_g20 = np.array(mandrel_data["20g_3w_free"])
 # 0g, mandrel-coiled, 3 watts, free convection
 m_w3_g0 = np.array(mandrel_data["0g_3w_free"])
 
+w3_step_response = np.array(step_data["40g_3W_free_step"])
+
 # adjust for initial length
 # start_pos = 2.5 # cm
 def adjust_start_pos(array, start_pos=2.5):
@@ -49,6 +54,8 @@ m_w3_g40_fcd_1 = adjust_start_pos(m_w3_g40_fcd_1)
 m_w3_g40_fcd_2 = adjust_start_pos(m_w3_g40_fcd_2)
 m_w3_g20 = adjust_start_pos(m_w3_g20)
 m_w3_g0 = adjust_start_pos(m_w3_g0)
+
+w3_step_response = adjust_start_pos(w3_step_response)
 
 ### ------ Helper Functions ------ ###
 
@@ -95,10 +102,12 @@ m_w3_g40_fcd_disp_avg, m_w3_g40_fcd_disp_stdv, m_w3_g40_fcd_strain_avg, m_w3_g40
 m_w3_g20_disp_avg, m_w3_g20_disp_stdv, m_w3_g20_strain_avg, m_w3_g20_strain_stdv = get_data_to_plot([m_w3_g20])
 m_w3_g0_disp_avg, m_w3_g0_disp_stdv, m_w3_g0_strain_avg, m_w3_g0_strain_stdv = get_data_to_plot([m_w3_g0])
 
+w3_step_disp_avg, w3_step_disp_stdv, w3_step_strain_avg, w3_step_strain_stdv = get_data_to_plot([w3_step_response])
+
 plt.style.use("seaborn")
 
 # plot 1: Mandrel coiled: 3W free, 1W free, 3W forced
-def do_plot_1():
+def plot_varying_power():
     fig, ax = plt.subplots(2,1)
     # strain
     ax[0].errorbar(t, m_w3_g40_strain_avg, yerr=m_w3_g40_strain_stdv, capsize=3, capthick=1, label="3W, free")
@@ -124,13 +133,12 @@ def do_plot_1():
 
 
 # plot 2: Mandrel coiled: 40g, 20g, 0g
-def do_plot_2():
+def plot_varying_load():
     fig, ax = plt.subplots(2,1)
     # strain
     ax[0].errorbar(t, m_w3_g40_strain_avg, yerr=m_w3_g40_strain_stdv, capsize=3, capthick=1, label="40 grams")
     ax[0].errorbar(t, m_w3_g20_strain_avg, yerr=m_w3_g20_strain_stdv, label="20 grams")
     ax[0].errorbar(t, m_w3_g0_strain_avg, yerr=m_w3_g0_strain_stdv, label="0 grams")
-    ax[0].set_title("Strain vs Time")
     ax[0].set_xlabel("Time (sec)")
     ax[0].set_ylabel("Strain")
     ax[0].set_title("Mandrel Coiled TCA Strain Response to 3W, 0.05Hz Square Wave")
@@ -148,7 +156,43 @@ def do_plot_2():
     # plt.savefig("3W_varying_load")
     plt.show()
 
-do_plot_1()
+def plot_step_reponse():
+    fig, ax = plt.subplots(2,1)
+    # strain
+    ax[0].errorbar(t_step, w3_step_strain_avg, yerr=w3_step_strain_stdv, capsize=3, capthick=1)
+    ax[0].set_xlabel("Time (sec)")
+    ax[0].set_ylabel("Strain")
+    ax[0].set_title("Mandrel Coiled TCA Strain Response to 3W Step Input")
+    # displacement
+    ax[1].errorbar(t_step, w3_step_disp_avg, yerr=w3_step_disp_stdv, capsize=3, capthick=1)
+    ax[1].set_title("Mandrel Coiled TCA Position Response to 3W Step Input")
+    ax[1].set_xlabel("Time (sec)")
+    ax[1].set_ylabel("Position (cm)")
+
+    k = 3
+    tau = 5
+
+    num = [k]
+    den = [tau, 1]
+    sys = control.TransferFunction(num, den)
+    t_sim = np.linspace(0, 30, 1000)
+    t_out, y_out = control.step_response(sys, t_sim)
+
+    ax[1].plot(t_out, 24.9-y_out)
+
+    num2 = [-k]
+    sys = control.TransferFunction(num2, den)
+    t_sim2 = np.linspace(30, 60, 1000)
+    t_out2, y_out2 = control.step_response(sys, t_sim2)
+
+    ax[1].plot(t_out2, 21.9-y_out2)
+    
+    plt.gca().invert_yaxis()
+    plt.tight_layout()
+    plt.savefig("3W_step")
+    plt.show()
+
+plot_step_reponse()
 
 
 

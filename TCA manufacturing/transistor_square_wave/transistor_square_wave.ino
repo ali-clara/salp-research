@@ -1,9 +1,9 @@
-int pulse_length = 30 * 1000; // ms
+int pulse_length = 10 * 1000; // ms
 int output_pin = 12;
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(115200);
+  Serial.begin(9600);
   pinMode(output_pin, OUTPUT);
 }
 
