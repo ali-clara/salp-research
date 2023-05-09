@@ -37,40 +37,66 @@ HX711 scale;
 #define CLK  6
 
 // globals
+int signal_pin = 12;
+
 float force_data;
 int signal_data;
-int freq = 500; // data collection frequency (ms)
-bool label = true;
+
+long time_interval_signal = 10 * 1000;  // pulse frequency (ms)
+long time_interval_load = 0.5 * 1000; // data collection frequency (ms)
+unsigned long previous_time_signal = millis();
+unsigned long previous_time_load = millis();
 
 void setup() {
-  // delay long enough to let me clear the serial monitor and start the python script
-  delay(5000);
-  Serial.begin(9600);
-  // Serial.println("HX711 scale demo");
+  // set up signal pin
+  digitalWrite(signal_pin, LOW);
+  pinMode(signal_pin, OUTPUT);
+  signal_data = 0;
 
+  // set up load cell
   scale.begin(DOUT, CLK);
   scale.set_scale(calibration_factor); //This value is obtained by using the SparkFun_HX711_Calibration sketch
   scale.tare(); //Assuming there is no weight on the scale at start up, reset the scale to 0
 
+  // delay long enough to let me clear the serial monitor and start the python script
+  delay(5000);
+
+  // set up serial communication and print column headers
+  Serial.begin(9600);
+  // Serial.println("HX711 scale demo");
+  Serial.print("Force (kgs)");
+  Serial.print(",");
+  Serial.println("Input Signal");
 }
 
 void loop() {
-  // print column headers
-  while(label){
-    Serial.print("Force (kgs)");
-    Serial.print(",");
-    Serial.println("Input Signal");
-    label = false;
+
+  unsigned long current_time = millis();
+
+  // change signal data every square wave interval (currently 10 sec)
+  if (current_time - previous_time_signal > time_interval_signal){
+    // update the previous time increment
+    previous_time_signal = current_time;
+
+    if (digitalRead(signal_pin) == HIGH){
+      digitalWrite(signal_pin, LOW);
+      signal_data = 0;
+    }
+    else{
+      digitalWrite(signal_pin, HIGH);
+      signal_data = 1;
+    }
   }
 
-  // print load cell data
-  force_data = scale.get_units();  // float
-  signal_data = 1;
-  Serial.print(force_data, 4);
-  Serial.print(",");
-  Serial.println(signal_data, 4);
+  // get load cell data and print every 500ms
+  if (current_time - previous_time_load > time_interval_load){
+    // update the previous time increment
+    previous_time_load = current_time;
+    
+    force_data = scale.get_units();  // float
+    Serial.print(force_data, 4);
+    Serial.print(",");
+    Serial.println(signal_data);
+  }
 
-  // Serial.println();
-
-  delay(freq);
 }

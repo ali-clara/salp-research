@@ -3,9 +3,11 @@
 
 import serial
 import csv
+import time
 import keyboard
 
 # setup
+start_time = time.time()
 # Arduino serial port
 arduino_port = "COM3"
 # Arduino baud rate (make sure it matches)
@@ -13,7 +15,7 @@ baud = 9600
 # serial connection
 ser = serial.Serial(arduino_port, baud)
 print(f"Connected to Arduino port {arduino_port}")
-
+print("Beginning load cell data collection, press 'q' when finished")
 sensor_data = []
 # loop until the "q" key is pressed
 while not keyboard.is_pressed("q"):
@@ -29,7 +31,7 @@ while not keyboard.is_pressed("q"):
 print("Exiting data collection")
 
 # save data to csv
-filename = "load_cell_data.csv"
+filename = "load-cell-data_"+str(start_time)+".csv"
 with open (filename, 'w', encoding='UTF8', newline='') as f:
     write = csv.writer(f)
     write.writerows(sensor_data)
