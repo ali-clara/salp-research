@@ -42,8 +42,8 @@ int signal_pin = 12;
 float force_data;
 int signal_data;
 
-long time_interval_signal = 10 * 1000;  // pulse frequency (ms)
-long time_interval_load = 0.5 * 1000; // data collection frequency (ms)
+long time_interval_signal = 30 * 1000;  // pulse frequency (ms)
+long time_interval_load = 0.2 * 1000; // data collection frequency (ms)
 unsigned long previous_time_signal = millis();
 unsigned long previous_time_load = millis();
 
