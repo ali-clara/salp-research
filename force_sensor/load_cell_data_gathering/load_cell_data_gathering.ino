@@ -32,9 +32,9 @@
 HX711 scale;
 
 // definitions
-#define calibration_factor -438000 //This value is obtained using the SparkFun_HX711_Calibration sketch
-#define DOUT  5
-#define CLK  6
+#define calibration_factor 13400 //This value is obtained using the SparkFun_HX711_Calibration sketch
+#define DOUT  10
+#define CLK  9
 
 // globals
 int signal_pin = 12;
@@ -64,7 +64,7 @@ void setup() {
   // set up serial communication and print column headers
   Serial.begin(9600);
   // Serial.println("HX711 scale demo");
-  Serial.print("Force (kgs)");
+  Serial.print("Force (g)");
   Serial.print(",");
   Serial.println("Input Signal");
 }

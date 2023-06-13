@@ -6,26 +6,26 @@ plt.style.use('seaborn')
 
 ## -------------------- Preprocessing -------------------- ##
 # grab data from csv
+# waves
 # data = pd.read_csv("force_data/load-cell-data_1683653160.csv") # 0.5 sec
 # data = pd.read_csv("force_data/load-cell-data_1683654314.csv") # 0.5 sec
 # data = pd.read_csv("force_data/load-cell-data_1683666918.csv") # 0.2 sec
 # data = pd.read_csv("force_data/load-cell-data_1683672261.csv") # 0.2 sec
-data = pd.read_csv("force_data/load-cell-data_1683672491.csv") # 0.2 sec, pulse length 30, approx 3W (actually measured not nominal)
+
+# steps
+# data = pd.read_csv("force_data/load-cell-data_1683672491.csv") # 0.2 sec, pulse length 30, approx 3W (actually measured not nominal)
+data = pd.read_csv("force_data/circuitry-test.csv") # 0.2 sec, pulse length 30, approx 3W (actually measured not nominal)
+
+# global parameters
+trim_index = 60
 recording_frequency = 0.2
-pulse_length_sec = 30
-pulse_length_index = int(pulse_length_sec / recording_frequency)
-
-force_data_kgs = data["Force (kgs)"]
-signal_data = data["Input Signal"]
-
-# create time array 
-t_len = len(signal_data)
-t = np.arange(0, t_len*recording_frequency, recording_frequency)
-
+pulse_length = 30
 
 # convert to milinewtons
-def kgs_to_mn(data):
-    mn = np.array(data) * 9.81 * 1000
+def g_to_mn(data):
+    """Args
+        data - list of force values (g)"""
+    mn = np.array(data) * 9.81
     return mn
 
 # adjust bias
@@ -37,10 +37,85 @@ def adjust_bias(data):
 
     return data
 
-force_data = kgs_to_mn(force_data_kgs)
-# force_data = adjust_bias(force_data)
-# print(force_data)
+def trim_force(force_data, input_signal):
+    """Args
+        force_data - list of force data to be trimmed
+        input_signal - list of corresponding input data"""
+    
+    # find the first location of a '1' - pulse turned on
+    pulse_start_index = input_signal.index(1)
+    # find the first location of a '0' ~after~ the first '1' - pulse turned off
+    pulse_stop_index = input_signal.index(0, pulse_start_index)
+    # trim the force data according to those indices
+    trimmed_data = force_data[pulse_start_index-trim_index:pulse_stop_index+trim_index+1]
+    trimmed_input = input_signal[pulse_start_index-trim_index:pulse_stop_index+trim_index+1]
 
+    return trimmed_data, trimmed_input
+
+def create_time_vector(trimmed_force_data):
+    """
+    Args
+        trimmed_force_data - one list of trimmed force data"""
+    t_len = len(trimmed_force_data)
+    t = np.arange(0, t_len*recording_frequency, recording_frequency)
+
+    return t
+
+def preprocessing(data_names, path):
+    """
+    Args 
+        data_names - array of strings, names of the data to be preprocessed
+        path - string, where the data lives
+    Returns 
+        big_data_array - array of raw force data (mN)
+        t - time (sec)"""
+    big_data_array = []
+    for name in data_names:
+        data = pd.read_csv(path+name)
+        force_data = data["Force (g)"].to_list()
+        input_data = data["Input Signal"].to_list()
+
+        force_data, input_data = trim_force(force_data, input_data)
+        force_data = g_to_mn(force_data)
+        big_data_array.append(force_data)
+
+    t = create_time_vector(big_data_array[0])
+    
+    return big_data_array, t, np.array(input_data)
+
+
+## -------------------- Helper Functions -------------------- ##
+
+def find_data_avg(big_data_array):
+    """Args
+        big_data_array - all the force data"""
+    mean = np.mean(big_data_array, axis=0)
+    st_dev = np.std(big_data_array, axis=0)
+
+    return mean, st_dev
+
+def align_yaxis(ax1, ax2):
+    """Thanks Tim from stack overflow"""
+    y_lims = np.array([ax.get_ylim() for ax in [ax1, ax2]])
+
+    # force 0 to appear on both axes, comment if don't need
+    y_lims[:, 0] = y_lims[:, 0].clip(None, 0)
+    y_lims[:, 1] = y_lims[:, 1].clip(0, None)
+
+    # normalize both axes
+    y_mags = (y_lims[:,1] - y_lims[:,0]).reshape(len(y_lims),1)
+    y_lims_normalized = y_lims / y_mags
+
+    # find combined range
+    y_new_lims_normalized = np.array([np.min(y_lims_normalized), np.max(y_lims_normalized)])
+
+    # denormalize combined range to get new axes
+    new_lim1, new_lim2 = y_new_lims_normalized * y_mags
+    ax1.set_ylim(new_lim1)
+    ax2.set_ylim(new_lim2)
+
+
+## -------------------- First Order Modeling -------------------- ##
 def find_k(data, start, stop):
     data = data[start:stop]
     k = max(data)
@@ -68,49 +143,75 @@ def find_tau(data, time, start, stop, ss_val=None, type='growth'):
 
     return tau
 
-# first order model
-pulse_start_index = np.where(signal_data==1)[0][0]
-pulse_stop_index = np.where(signal_data==1)[0][-1]
+def find_first_order_sys(force_data, t, start, stop, type):
+    k = find_k(force_data, start, stop)
+    tau = find_tau(force_data, t, start, stop, type)
+    num = [k]
+    den = [tau, 1]
+    sys = control.TransferFunction(num, den)
+    t_sim = np.linspace(t[start], t[stop], 1000)
+    t_out, y_out = control.step_response(sys, t_sim)
 
-# heating
-k_h = find_k(force_data, pulse_start_index, pulse_stop_index)
-tau_h = find_tau(force_data, t, pulse_start_index, pulse_stop_index, type='growth')
-num_h = [k_h]
-den_h = [tau_h, 1]
-sys_h = control.TransferFunction(num_h, den_h)
-t_sim_h = np.linspace(t[pulse_start_index], t[pulse_stop_index], 1000)
-t_out_h, y_out_h = control.step_response(sys_h, t_sim_h)
-# cooling
-# k_c = find_k(force_data, pulse_stop_index, len(t))
-tau_c = find_tau(force_data, t, pulse_stop_index, len(t), ss_val=k_h, type='decay')
-k_c = -k_h
-num2 = [k_c]
-den2 = [tau_c, 1]
-t_sim_c = np.linspace(t[pulse_stop_index], t[-1], 1000)
-sys_c = control.TransferFunction(num2, den2)
-t_out_c, y_out_c = control.step_response(sys_c, t_sim_c)
+    return k, tau, t_out, y_out
 
-print(f"Heating: tau = {tau_h}, k = {k_h}")
-print(f"Cooling: tau = {round(tau_c,4)}, k = {k_c}")
+def first_order_model(force_data, t):
+    pulse_start_index = trim_index
+    pulse_length_index = int(pulse_length / recording_frequency)
+    pulse_stop_index = pulse_start_index+pulse_length_index
 
-# plot
+    # heating
+    k_h, tau_h, t_out_h, y_out_h = find_first_order_sys(force_data, t, pulse_start_index, pulse_stop_index, "growth")
+    # cooling
+    k_c, tau_c, t_out_c, y_out_c = find_first_order_sys(force_data, t, pulse_stop_index, len(t), "decay")
+
+    print(f"Heating: tau = {tau_h}, k = {k_h}")
+    print(f"Cooling: tau = {round(tau_c,4)}, k = {k_c}")
+
+    return [k_h, tau_h, t_out_h, y_out_h], [k_c, tau_c, t_out_c, y_out_c]
+
+
+###### ------------------ Flight Code ------------------ #########
+
+# power_input = ["1W", "3W", "5W"]
+power_input = ["5W"]
+
+data_names = ["load-cell-data_1.csv", 
+              "load-cell-data_2.csv", 
+              "load-cell-data_3.csv",
+              "load-cell-data_4.csv",
+              "load-cell-data_5.csv",
+              "load-cell-data_6.csv", 
+              "load-cell-data_7.csv"]
+
+# get data and plot
 fig, ax = plt.subplots(1,1, figsize=(9,5))
-ax.plot(t, force_data, label="Force response")
-ax.plot(t_out_h, y_out_h, label=f"Heating: tau = {tau_h}, k = {k_h}")
-ax.plot(t_out_c, -k_c+y_out_c, label=f"Cooling: tau = {round(tau_c,4)}, k = {k_c}")
-
 ax2 = ax.twinx()
-ax2.plot(t, 3*signal_data, 'k--', label="Input signal", alpha=0.4)
 
-ax.set_xlabel("Time (sec)")
-ax.set_ylabel("Force (mN)")
-ax2.set_ylabel("Input signal (Watts)")
-ax.set_title("Force response to step in power")
+for power in power_input:
+
+    data_path = "force_data/"+power+"/"
+    raw_force_data, t, input_data = preprocessing(data_names, data_path)
+    data_avg, data_stdv = find_data_avg(raw_force_data)
+
+    ax.plot(t, data_avg, label="Measured Force")
+    ax.fill_between(t, data_avg-data_stdv, data_avg+data_stdv, alpha=0.3)
+
+    ax.set_ylabel("Force (mN)")
+    ax.set_xlabel("Time (sec)")
+    ax.set_title("Force response to "+power+" Step in Power")
+
+    ax2.plot(t, int(power[0])*input_data, 'k--', label="Input signal", alpha=0.4)
+    ax2.set_ylabel("Input signal (Watts)")
 
 lines, labels = ax.get_legend_handles_labels()
 lines2, labels2 = ax2.get_legend_handles_labels()
 ax2.legend(lines + lines2, labels + labels2, loc=0)
 
-plt.tight_layout()
-# plt.savefig("force_data/figs/force-power-step.png")
+align_yaxis(ax, ax2)
+
+# plt.legend(loc=0)
+
+plt.savefig("force_data/figs/"+power+"_force_response.png")
+
 plt.show()
+

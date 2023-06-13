@@ -37,12 +37,13 @@
 
 #include "HX711.h"
 
-#define DOUT  5
-#define CLK  6
+#define DOUT  10
+#define CLK  9
 
 HX711 scale;
 
-float calibration_factor = -438000; //-7050 worked for my 440lb max scale setup
+// float calibration_factor = -438000; //-7050 worked for my 440lb max scale setup
+float calibration_factor = -13400;
 
 void setup() {
   Serial.begin(9600);
@@ -67,7 +68,7 @@ void loop() {
 
   Serial.print("Reading: ");
   Serial.print(scale.get_units(), 3);
-  Serial.print(" kg"); //Change this to kg and re-adjust the calibration factor if you follow SI units like a sane person
+  Serial.print(" g"); //Change this to kg and re-adjust the calibration factor if you follow SI units like a sane person
   Serial.print(" calibration_factor: ");
   Serial.print(calibration_factor);
   Serial.println();
@@ -76,8 +77,8 @@ void loop() {
   {
     char temp = Serial.read();
     if(temp == '+' || temp == 'a')
-      calibration_factor += 1000;
+      calibration_factor += 10;
     else if(temp == '-' || temp == 'z')
-      calibration_factor -= 1000;
+      calibration_factor -= 10;
   }
 }
