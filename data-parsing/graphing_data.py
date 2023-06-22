@@ -4,22 +4,16 @@ import pandas as pd
 import control
 plt.style.use('seaborn')
 
-## -------------------- Preprocessing -------------------- ##
-# grab data from csv
-# waves
-# data = pd.read_csv("force_data/load-cell-data_1683653160.csv") # 0.5 sec
-# data = pd.read_csv("force_data/load-cell-data_1683654314.csv") # 0.5 sec
-# data = pd.read_csv("force_data/load-cell-data_1683666918.csv") # 0.2 sec
-# data = pd.read_csv("force_data/load-cell-data_1683672261.csv") # 0.2 sec
+## -------------------- Global parameters -------------------- ##
 
-# steps
-# data = pd.read_csv("force_data/load-cell-data_1683672491.csv") # 0.2 sec, pulse length 30, approx 3W (actually measured not nominal)
-# data = pd.read_csv("force_data/circuitry-test.csv") # 0.2 sec, pulse length 30, approx 3W (actually measured not nominal)
-
-# global parameters
-trim_index = 60
+# how much data to save on either side of the pulse
+trim_index = 60 
+# rate at which data was taken (sec)
 recording_frequency = 0.2
+# length of input singnal pulse (sec)
 pulse_length = 30
+
+## -------------------- Preprocessing -------------------- ##
 
 # convert to milinewtons
 def g_to_mn(data):
@@ -61,7 +55,7 @@ def create_time_vector(trimmed_force_data):
 
     return t
 
-def preprocessing(data_names, path):
+def force_preprocessing(data_names, path):
     """
     Args 
         data_names - array of strings, names of the data to be preprocessed
@@ -131,7 +125,6 @@ def find_tau(data, time, start, stop, ss_val=None, type='growth'):
     if ss_val == None:
         ss_val = max(data)
     
-    print(ss_val)
     val_at_t63 = ss_val*0.63
 
     if type == 'growth':
@@ -197,7 +190,7 @@ ax2 = ax.twinx()
 for power in power_input:
 
     data_path = "force_data/"+power+"/"
-    raw_force_data, t, input_data = preprocessing(data_names, data_path)
+    raw_force_data, t, input_data = force_preprocessing(data_names, data_path)
     data_avg, data_stdv = find_data_avg(raw_force_data)
 
     heating_params, cooling_params = first_order_model(data_avg, t)
