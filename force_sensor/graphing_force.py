@@ -14,7 +14,7 @@ plt.style.use('seaborn')
 
 # steps
 # data = pd.read_csv("force_data/load-cell-data_1683672491.csv") # 0.2 sec, pulse length 30, approx 3W (actually measured not nominal)
-data = pd.read_csv("force_data/circuitry-test.csv") # 0.2 sec, pulse length 30, approx 3W (actually measured not nominal)
+# data = pd.read_csv("force_data/circuitry-test.csv") # 0.2 sec, pulse length 30, approx 3W (actually measured not nominal)
 
 # global parameters
 trim_index = 60
@@ -130,10 +130,12 @@ def find_tau(data, time, start, stop, ss_val=None, type='growth'):
 
     if ss_val == None:
         ss_val = max(data)
+    
+    print(ss_val)
     val_at_t63 = ss_val*0.63
 
     if type == 'growth':
-        index_at_t63 = np.where(np.isclose(data, val_at_t63, atol=0.3))[0][0]
+        index_at_t63 = np.where(np.isclose(data, val_at_t63, atol=0.5))[0][0]
     
     if type == 'decay':
         data = ss_val - data
@@ -145,7 +147,7 @@ def find_tau(data, time, start, stop, ss_val=None, type='growth'):
 
 def find_first_order_sys(force_data, t, start, stop, type):
     k = find_k(force_data, start, stop)
-    tau = find_tau(force_data, t, start, stop, type)
+    tau = find_tau(force_data, t, start, stop, type=type)
     num = [k]
     den = [tau, 1]
     sys = control.TransferFunction(num, den)
@@ -160,20 +162,25 @@ def first_order_model(force_data, t):
     pulse_stop_index = pulse_start_index+pulse_length_index
 
     # heating
-    k_h, tau_h, t_out_h, y_out_h = find_first_order_sys(force_data, t, pulse_start_index, pulse_stop_index, "growth")
+    k_h, tau_h, t_out_h, y_out_h = find_first_order_sys(force_data, t, pulse_start_index, pulse_stop_index, type="growth")
     # cooling
-    k_c, tau_c, t_out_c, y_out_c = find_first_order_sys(force_data, t, pulse_stop_index, len(t), "decay")
+    k_c, tau_c, t_out_c, y_out_c = find_first_order_sys(force_data, t, pulse_stop_index, -1, type="decay")
 
     print(f"Heating: tau = {tau_h}, k = {k_h}")
     print(f"Cooling: tau = {round(tau_c,4)}, k = {k_c}")
 
     return [k_h, tau_h, t_out_h, y_out_h], [k_c, tau_c, t_out_c, y_out_c]
 
+def growth_to_decay(growth_data):
+    ss = max(growth_data)
+    decay = ss - growth_data
+    return decay
+
 
 ###### ------------------ Flight Code ------------------ #########
 
 # power_input = ["1W", "3W", "5W"]
-power_input = ["5W"]
+power_input = ["1W"]
 
 data_names = ["load-cell-data_1.csv", 
               "load-cell-data_2.csv", 
@@ -193,8 +200,13 @@ for power in power_input:
     raw_force_data, t, input_data = preprocessing(data_names, data_path)
     data_avg, data_stdv = find_data_avg(raw_force_data)
 
+    heating_params, cooling_params = first_order_model(data_avg, t)
+
     ax.plot(t, data_avg, label="Measured Force")
     ax.fill_between(t, data_avg-data_stdv, data_avg+data_stdv, alpha=0.3)
+
+    ax.plot(heating_params[2], heating_params[3])
+    ax.plot(cooling_params[2], growth_to_decay(cooling_params[3]))
 
     ax.set_ylabel("Force (mN)")
     ax.set_xlabel("Time (sec)")
@@ -211,7 +223,7 @@ align_yaxis(ax, ax2)
 
 # plt.legend(loc=0)
 
-plt.savefig("force_data/figs/"+power+"_force_response.png")
+plt.savefig("force_data/figs/"+power+"_force_response-model.png")
 
 plt.show()
 
