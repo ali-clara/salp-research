@@ -1,13 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as font_manager
 import pandas as pd
 import control
-plt.style.use('seaborn')
+
+plt.style.use('seaborn-deep')
 
 ## -------------------- Global parameters -------------------- ##
 
 # how much data to save on either side of the pulse
-trim_index = 60 
+trim_index = 55 
 # rate at which data was taken (sec)
 recording_frequency = 0.2
 # length of input singnal pulse (sec)
@@ -128,11 +130,11 @@ def find_tau(data, time, start, stop, ss_val=None, type='growth'):
     val_at_t63 = ss_val*0.63
 
     if type == 'growth':
-        index_at_t63 = np.where(np.isclose(data, val_at_t63, atol=0.5))[0][0]
+        index_at_t63 = np.where(np.isclose(data, val_at_t63, atol=2.6))[0][0]
     
     if type == 'decay':
         data = ss_val - data
-        index_at_t63 = np.where(np.isclose(data, val_at_t63, atol=3))[0][0]
+        index_at_t63 = np.where(np.isclose(data, val_at_t63, atol=3.1))[0][0]
     
     tau = time[index_at_t63] - time[0]
 
@@ -172,20 +174,26 @@ def growth_to_decay(growth_data):
 
 ###### ------------------ Flight Code ------------------ #########
 
-# power_input = ["1W", "3W", "5W"]
-power_input = ["1W"]
+power_input = ["1W", "3W", "4W"]
+# power_input = ["4W"]
 
 data_names = ["load-cell-data_1.csv", 
               "load-cell-data_2.csv", 
-              "load-cell-data_3.csv",
-              "load-cell-data_4.csv",
-              "load-cell-data_5.csv",
-              "load-cell-data_6.csv", 
-              "load-cell-data_7.csv"]
+              "load-cell-data_3.csv"]
 
 # get data and plot
 fig, ax = plt.subplots(1,1, figsize=(9,5))
-ax2 = ax.twinx()
+# ax2 = ax.twinx()
+
+ax.spines.right.set_visible(False)
+ax.spines.top.set_visible(False)
+
+csfont = {'fontname':'Comic Sans MS'}
+tnrfont = {'fontname':'Times New Roman'}
+
+font = font_manager.FontProperties(family='Times New Roman',
+                                   weight='normal',
+                                   style='normal')
 
 for power in power_input:
 
@@ -193,30 +201,34 @@ for power in power_input:
     raw_force_data, t, input_data = force_preprocessing(data_names, data_path)
     data_avg, data_stdv = find_data_avg(raw_force_data)
 
-    heating_params, cooling_params = first_order_model(data_avg, t)
+    # heating_params, cooling_params = first_order_model(data_avg, t)
 
-    ax.plot(t, data_avg, label="Measured Force")
+    # ax.plot(t, data_avg, label="Measured Force")
+    ax.plot(t, data_avg, label=power)
     ax.fill_between(t, data_avg-data_stdv, data_avg+data_stdv, alpha=0.3)
 
-    ax.plot(heating_params[2], heating_params[3])
-    ax.plot(cooling_params[2], growth_to_decay(cooling_params[3]))
+    # ax.plot(heating_params[2], heating_params[3])
+    # ax.plot(cooling_params[2], growth_to_decay(cooling_params[3]))
 
-    ax.set_ylabel("Force (mN)")
-    ax.set_xlabel("Time (sec)")
-    ax.set_title("Force response to "+power+" Step in Power")
+    ax.set_ylabel("Force (mN)", **tnrfont, fontsize=14)
+    ax.set_xlabel("Time (sec)", **tnrfont, fontsize=14)
+    # ax.set_title("Force response to "+power+" Step in Power")
 
-    ax2.plot(t, int(power[0])*input_data, 'k--', label="Input signal", alpha=0.4)
-    ax2.set_ylabel("Input signal (Watts)")
+    # ax2.plot(t, int(power[0])*input_data, 'k--', label="Input signal", alpha=0.4)
+    # ax2.set_ylabel("Input signal (Watts)")
 
-lines, labels = ax.get_legend_handles_labels()
-lines2, labels2 = ax2.get_legend_handles_labels()
-ax2.legend(lines + lines2, labels + labels2, loc=0)
+# lines, labels = ax.get_legend_handles_labels()
+# lines2, labels2 = ax2.get_legend_handles_labels()
+# ax2.legend(lines + lines2, labels + labels2, loc=0)
 
-align_yaxis(ax, ax2)
+# align_yaxis(ax, ax2)
 
-# plt.legend(loc=0)
+plt.legend(loc=0, prop=font, fontsize=13)
+plt.xticks(**tnrfont, fontsize=13)
+plt.yticks(**tnrfont, fontsize=13)
 
-plt.savefig("force_data/figs/"+power+"_force_response-model.png")
+# plt.savefig("force_data/figs/"+power+"_force_response-model.png")
+plt.savefig("force_data/figs/total-force-response.png")
 
 plt.show()
 
