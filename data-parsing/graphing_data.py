@@ -174,7 +174,7 @@ def growth_to_decay(growth_data):
 
 ###### ------------------ Flight Code ------------------ #########
 
-power_input = ["1W", "3W", "4W"]
+power_input = ["1W", "2W", "3W", "4W"]
 # power_input = ["4W"]
 
 data_names = ["load-cell-data_1.csv", 

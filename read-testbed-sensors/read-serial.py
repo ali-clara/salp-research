@@ -31,7 +31,7 @@ while not keyboard.is_pressed("q"):
 print("Exiting data collection")
 
 # save data to csv
-filename = "force_data/4W/load-cell-data_"+str(start_time)+".csv"
+filename = "force_data/2W/load-cell-data_"+str(start_time)+".csv"
 # filename = "encoder_data/1W/encoder-data_"+str(start_time)+".csv"
 
 with open (filename, 'w', encoding='UTF8', newline='') as f:
