@@ -4,12 +4,13 @@ import matplotlib.font_manager as font_manager
 import pandas as pd
 import control
 
-plt.style.use('seaborn-deep')
+from create_paper_figure import MakePlot
+
 
 ## -------------------- Global parameters -------------------- ##
 
 # how much data to save on either side of the pulse
-trim_index = 55 
+trim_index = 75
 # rate at which data was taken (sec)
 recording_frequency = 0.2
 # length of input singnal pulse (sec)
@@ -24,16 +25,14 @@ def g_to_mn(data):
     mn = np.array(data) * 9.81
     return mn
 
-# adjust bias
-def adjust_bias(data):
-    abs_bias_term = 2
-    for i, val in enumerate(data):
-        if abs(val) <= abs_bias_term:
-            data[i] = 0
+def disp_to_strain(data, lg):
+    """Args
+        data - list of displacement values (mm)"""
+    
+    strain = (lg - np.array(data)) / lg
+    return strain
 
-    return data
-
-def trim_force(force_data, input_signal):
+def trim_data(data_list, input_signal):
     """Args
         force_data - list of force data to be trimmed
         input_signal - list of corresponding input data"""
@@ -43,7 +42,7 @@ def trim_force(force_data, input_signal):
     # find the first location of a '0' ~after~ the first '1' - pulse turned off
     pulse_stop_index = input_signal.index(0, pulse_start_index)
     # trim the force data according to those indices
-    trimmed_data = force_data[pulse_start_index-trim_index:pulse_stop_index+trim_index+1]
+    trimmed_data = data_list[pulse_start_index-trim_index:pulse_stop_index+trim_index+1]
     trimmed_input = input_signal[pulse_start_index-trim_index:pulse_stop_index+trim_index+1]
 
     return trimmed_data, trimmed_input
@@ -71,7 +70,7 @@ def force_preprocessing(data_names, path):
         force_data = data["Force (g)"].to_list()
         input_data = data["Input Signal"].to_list()
 
-        force_data, input_data = trim_force(force_data, input_data)
+        force_data, input_data = trim_data(force_data, input_data)
         force_data = g_to_mn(force_data)
         big_data_array.append(force_data)
 
@@ -80,6 +79,28 @@ def force_preprocessing(data_names, path):
     return big_data_array, t, np.array(input_data)
 
 
+def strain_preprocessing(data_names, path, og_lengths):
+    """
+    Args 
+        data_names - array of strings, names of the data to be preprocessed
+        path - string, where the data lives
+        og_lengths - resting length of TCA corresponding to each data collection
+    Returns 
+        big_data_array - array of raw force data (mN)
+        t - time (sec)"""
+    big_data_array = []
+    for i, name in enumerate(data_names):
+        data = pd.read_csv(path+name)
+        disp_data = data["Linear displacement (mm)"].to_list()
+        input_data = data["Input Signal"].to_list()
+
+        disp_data, input_data = trim_data(disp_data, input_data)
+        strain_data = disp_to_strain(disp_data, og_lengths[i])
+        big_data_array.append(strain_data)
+
+    t = create_time_vector(big_data_array[0])
+    
+    return big_data_array, t, np.array(input_data)
 ## -------------------- Helper Functions -------------------- ##
 
 def find_data_avg(big_data_array):
@@ -174,61 +195,58 @@ def growth_to_decay(growth_data):
 
 ###### ------------------ Flight Code ------------------ #########
 
-power_input = ["1W", "2W", "3W", "4W"]
+power_input = ["1W", "2W", "3W"]
 # power_input = ["4W"]
 
-data_names = ["load-cell-data_1.csv", 
-              "load-cell-data_2.csv", 
-              "load-cell-data_3.csv"]
+force_data_names = ["load-cell-data_1.csv", 
+                    "load-cell-data_2.csv", 
+                    "load-cell-data_3.csv"]
 
-# get data and plot
-fig, ax = plt.subplots(1,1, figsize=(9,5))
-# ax2 = ax.twinx()
+strain_data_names = ["encoder-data_1.csv",
+                     "encoder-data_2.csv",
+                     "encoder-data_3.csv"]
 
-ax.spines.right.set_visible(False)
-ax.spines.top.set_visible(False)
+encoder_tca_lengths_10g = [129.4, 125.6, 106.2]
 
-csfont = {'fontname':'Comic Sans MS'}
-tnrfont = {'fontname':'Times New Roman'}
+def get_and_plot_force():
+    my_plot = MakePlot()
 
-font = font_manager.FontProperties(family='Times New Roman',
-                                   weight='normal',
-                                   style='normal')
+    for power in power_input:
+        data_path = "force_data/"+power+"/"
+        raw_force_data, t, input_data = force_preprocessing(force_data_names, data_path)
+        data_avg, data_stdv = find_data_avg(raw_force_data)
 
-for power in power_input:
+        # heating_params, cooling_params = first_order_model(data_avg, t)
 
-    data_path = "force_data/"+power+"/"
-    raw_force_data, t, input_data = force_preprocessing(data_names, data_path)
-    data_avg, data_stdv = find_data_avg(raw_force_data)
+        my_plot.set_xy(t, [data_avg])
+        my_plot.set_stdev([data_stdv])
+        my_plot.set_axis_labels("Time (sec)", "Force (mN)")
+        my_plot.set_data_labels([power])
+        my_plot.set_savefig("testfig.png")
 
-    # heating_params, cooling_params = first_order_model(data_avg, t)
+        my_plot.plot_xy()
 
-    # ax.plot(t, data_avg, label="Measured Force")
-    ax.plot(t, data_avg, label=power)
-    ax.fill_between(t, data_avg-data_stdv, data_avg+data_stdv, alpha=0.3)
+    my_plot.label_and_save()
 
-    # ax.plot(heating_params[2], heating_params[3])
-    # ax.plot(cooling_params[2], growth_to_decay(cooling_params[3]))
 
-    ax.set_ylabel("Force (mN)", **tnrfont, fontsize=14)
-    ax.set_xlabel("Time (sec)", **tnrfont, fontsize=14)
-    # ax.set_title("Force response to "+power+" Step in Power")
+def get_and_plot_strain():
+    my_plot = MakePlot()
 
-    # ax2.plot(t, int(power[0])*input_data, 'k--', label="Input signal", alpha=0.4)
-    # ax2.set_ylabel("Input signal (Watts)")
+    for power in power_input:
+        data_path = "encoder_data/"+power+"/"
+        raw_strain_data, t, input_data = strain_preprocessing(strain_data_names, data_path, encoder_tca_lengths_10g)
+        data_avg, data_stdv = find_data_avg(raw_strain_data)
 
-# lines, labels = ax.get_legend_handles_labels()
-# lines2, labels2 = ax2.get_legend_handles_labels()
-# ax2.legend(lines + lines2, labels + labels2, loc=0)
+        my_plot.set_xy(t, [data_avg])
+        my_plot.set_stdev([data_stdv])
+        my_plot.set_axis_labels("Time (sec)", "Strain")
+        my_plot.set_data_labels([power])
+        my_plot.set_savefig("testfig.png")
 
-# align_yaxis(ax, ax2)
+        my_plot.plot_xy()
 
-plt.legend(loc=0, prop=font, fontsize=13)
-plt.xticks(**tnrfont, fontsize=13)
-plt.yticks(**tnrfont, fontsize=13)
+    my_plot.label_and_save()
 
-# plt.savefig("force_data/figs/"+power+"_force_response-model.png")
-plt.savefig("force_data/figs/total-force-response.png")
 
-plt.show()
+get_and_plot_strain()
 
