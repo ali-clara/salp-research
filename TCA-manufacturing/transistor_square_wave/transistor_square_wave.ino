@@ -1,6 +1,6 @@
 #include <stdbool.h>
 
-int pulse_length = 30 * 1000; // ms
+int pulse_length = 5 * 1000; // ms
 int output_pin = 12;
 
 bool analog_flag = false;

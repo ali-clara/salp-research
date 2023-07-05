@@ -22,12 +22,26 @@ class MakePlot:
         self.stdev = None
 
         self.data_label = None
+        self.linestyle = None
 
         self.tnrfont = {'fontname':'Times New Roman'}
+        
+        # colors chosen from the Color Universal Design pallete http://people.apache.org/~crossley/cud/cud.html
+        colors = ["#e69f00",
+                  "#0072b2",
+                  "#cc79a7",
+                  "#56b4e9",
+                  "#009e73",
+                  "#f0e442",
+                  "#d55e00"]
+        
+        self.unused_colors = colors
+        self.last_used_color = None
 
-    def set_xy(self, x, y):
+    def set_xy(self, x, y, linestyle="-"):
         self.x = np.array(x)
         self.y = np.array(y)
+        self.linestyle = linestyle
     
     def set_axis_labels(self, xlabel, ylabel, title=None):
         self.xlabel = xlabel
@@ -43,6 +57,15 @@ class MakePlot:
     def set_savefig(self, filename):
         self.filename = filename
 
+    def reset_params(self):
+        self.x = None
+        self.y = None
+        self.stdev = None
+        self.data_label = None
+
+    def use_same_color(self):
+        self.unused_colors.insert(0, self.last_used_color)
+
     def plot_xy(self):
 
         self.ax.spines.right.set_visible(False)
@@ -52,11 +75,26 @@ class MakePlot:
         self.ax.set_xlabel(self.xlabel, **self.tnrfont, fontsize=14)
         self.ax.set_title(self.title, **self.tnrfont, fontsize=16)
 
-        for i, y in enumerate(self.y):
-            self.ax.plot(self.x, y, label=self.data_label[i])
+        if self.data_label is not None:
+            self.ax.plot(self.x, self.y, 
+                         label=self.data_label, 
+                         color=self.unused_colors[0],
+                         linestyle=self.linestyle)
 
-            if self.stdev is not None:
-                self.ax.fill_between(self.x, y - self.stdev[i], y + self.stdev[i], alpha=0.3)
+        else:
+            self.ax.plot(self.x, self.y, 
+                         label=self.data_label, 
+                         color=self.unused_colors[0],
+                         linestyle = self.linestyle)
+
+        if self.stdev is not None:
+            self.ax.fill_between(self.x, self.y - self.stdev, self.y + self.stdev, 
+                                 alpha=0.3, 
+                                 color=self.unused_colors[0])
+
+        self.last_used_color = self.unused_colors.pop(0)
+
+        self.reset_params()
 
     def label_and_save(self):
         font = font_manager.FontProperties(family='Times New Roman',
@@ -74,18 +112,25 @@ class MakePlot:
 
 if __name__ == "__main__":
     n = 10
-    y1 = random.sample(range(0,n), n)
-    y2 = random.sample(range(0,n), n)
     x = np.linspace(0, n, n)
 
     my_plot = MakePlot()
-    my_plot.set_xy(x, [y1, y2])
-    my_plot.set_data_labels(["data1", "data2"])
-    my_plot.set_axis_labels("x", "y", "title")
-    my_plot.set_stdev([0.2, 0.1])
-    my_plot.set_savefig("testfig")
 
-    my_plot.plot_xy()
+    for i in range(4):
+        y = random.sample(range(0,n), n)
+    
+        my_plot.set_xy(x, y)
+        my_plot.set_data_labels("data "+str(i))
+        my_plot.set_stdev(0.2)
+        my_plot.plot_xy()
+
+        my_plot.use_same_color()
+        my_plot.set_xy(x, np.array(y)+0.5, '--')
+        my_plot.plot_xy()
+
+    
+    my_plot.set_axis_labels("x", "y", "title")
+    my_plot.set_savefig("testfig")
     my_plot.label_and_save()
 
 
