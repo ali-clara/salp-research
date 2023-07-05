@@ -1,6 +1,6 @@
 #include <stdbool.h>
 
-int pulse_length = 30 * 1000; // ms
+int pulse_length = 5 * 1000; // ms
 int output_pin = 12;
 
 bool analog_flag = false;
@@ -22,7 +22,7 @@ void loop() {
   }
 
   else if (analog_flag == true){
-    analogWrite(output_pin, 149); // should be 3V
+    analogWrite(output_pin, 81); // should be 3V
     Serial.println("high");
     delay(pulse_length);
     analogWrite(output_pin, 0);
