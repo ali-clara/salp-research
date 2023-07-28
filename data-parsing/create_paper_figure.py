@@ -29,11 +29,11 @@ class MakePlot:
         # colors chosen from the Color Universal Design pallete http://people.apache.org/~crossley/cud/cud.html
         colors = ["#e69f00",
                   "#0072b2",
+                  "#d55e00",
+                #   "#56b4e9",
                   "#cc79a7",
-                  "#56b4e9",
-                  "#009e73",
-                  "#f0e442",
-                  "#d55e00"]
+                #   "#f0e442",
+                  "#009e73"]
         
         self.unused_colors = colors
         self.last_used_color = None

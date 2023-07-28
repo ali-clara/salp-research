@@ -17,7 +17,7 @@ void setup() {
   // Serial.begin(9600);
   
   // calculate goal position
-  length = 1.0;    // meters
+  length = 1.0;    // meters -- CHANGE BASED ON THREAD LENGTH
   twists_per_m = 720;
   goal_pos = length*twists_per_m*steps_per_rev;
 

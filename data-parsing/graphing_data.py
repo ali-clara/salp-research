@@ -209,7 +209,6 @@ def get_and_plot_force():
         my_plot.set_xy(t_out_c, y_out_c, '--')
         my_plot.plot_xy()
 
-
     my_plot.label_and_save()
 
 
@@ -226,19 +225,42 @@ def get_and_plot_strain():
         filtered_strain_data, filtered_t = filter_data(raw_strain_data, t)
         filtered_data_avg, filtered_data_stdv = find_data_avg(filtered_strain_data)
 
+        k_h, tau_h, t_out_h, y_out_h = first_order_fit.find_first_order_sys(raw_data_avg, t, 
+                                                                    start=55, stop=int(40/0.2), 
+                                                                    type='decay', ss_tolerance=0.001,
+                                                                    offset = 1.0)
+        
+        y_out_h = 1 - y_out_h
+
+        k_h = k_h/int(power[0])
+        # k_c = k_c/int(power[0])
+
+        print(power)
+        print(f"Heating: tau = {round(tau_h,3)}, k = {round(k_h,3)}")
+
         my_plot.set_axis_labels("Time (sec)", "Strain")
-        my_plot.set_data_labels([power])
+        my_plot.set_data_labels(power)
         
         # filtered data average
-        my_plot.set_xy(filtered_t, [filtered_data_avg])
-        my_plot.set_stdev([filtered_data_stdv])
-        my_plot.set_savefig("figs/encoder-figs/encoder-filtered-data.png")
-        my_plot.plot_xy()
+        # my_plot.set_xy(filtered_t, [filtered_data_avg])
+        # my_plot.set_stdev([filtered_data_stdv])
+        # my_plot.set_savefig("figs/encoder-figs/encoder-filtered-data.png")
+        # my_plot.plot_xy()
 
         # raw data average
-        # my_plot.set_xy(t, [raw_data_avg])
-        # my_plot.set_stdev([raw_data_stdv])
-        # my_plot.set_savefig("figs/encoder-figs/encoder-raw-data.png")
+        my_plot.set_xy(t, raw_data_avg)
+        my_plot.set_stdev(raw_data_stdv)
+        my_plot.set_savefig("figs/encoder-figs/encoder-raw-data-model.pdf")
+        my_plot.plot_xy()
+
+        # heating first order model
+        my_plot.use_same_color()
+        my_plot.set_xy(t_out_h, y_out_h, '--')
+        my_plot.plot_xy()
+
+        # cooling first order model
+        # my_plot.use_same_color()
+        # my_plot.set_xy(t_out_c, y_out_c, '--')
         # my_plot.plot_xy()
 
         # raw data individuals
@@ -250,5 +272,5 @@ def get_and_plot_strain():
 
     my_plot.label_and_save()
 
-get_and_plot_force()
+get_and_plot_strain()
 

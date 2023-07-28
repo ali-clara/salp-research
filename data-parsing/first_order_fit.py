@@ -2,7 +2,10 @@ import numpy as np
 import control
 
 ## -------------------- First Order Modeling -------------------- ##
-def find_ss(data, tol):
+def find_ss(data, tol, offset=None):
+    if offset is not None:
+        data = offset - data
+
     peak = max(data)
 
     ss_list = []
@@ -14,9 +17,9 @@ def find_ss(data, tol):
 
     return ss_val
 
-def find_k(data, start, stop, ss_tolerance):
+def find_k(data, start, stop, ss_tolerance, offset):
     data = data[start:stop]
-    k = find_ss(data, ss_tolerance)
+    k = find_ss(data, ss_tolerance, offset)
     return k
 
 def growth_to_decay(growth_data, ss_val):
@@ -59,10 +62,10 @@ def find_tau(data, time, start, stop, ss_tolerance, ss_val=None, type='growth'):
 
     return tau
 
-def find_first_order_sys(data, t, start, stop, type, ss_tolerance, ss_val=None):
+def find_first_order_sys(data, t, start, stop, type, ss_tolerance, offset, ss_val=None):
     k = ss_val
     if ss_val is None:
-        k = find_k(data, start, stop, ss_tolerance)
+        k = find_k(data, start, stop, ss_tolerance, offset)
     tau = find_tau(data, t, start, stop, ss_tolerance, type=type, ss_val=ss_val)
     num = [k]
     den = [tau, 1]
@@ -72,7 +75,7 @@ def find_first_order_sys(data, t, start, stop, type, ss_tolerance, ss_val=None):
 
     return k, tau, t_out, y_out
 
-def first_order_model(force_data, t, ss_tolerance=40, trim_index=55, recording_frequency=0.2, pulse_length=30):
+def first_order_model(force_data, t, ss_tolerance=40, trim_index=55, recording_frequency=0.2, pulse_length=30, offset=None):
     pulse_start_index = trim_index
     pulse_length_index = int(pulse_length / recording_frequency)
     pulse_stop_index = pulse_start_index+pulse_length_index
@@ -83,7 +86,8 @@ def first_order_model(force_data, t, ss_tolerance=40, trim_index=55, recording_f
                                                         start=pulse_start_index, 
                                                         stop=pulse_stop_index, 
                                                         type="growth", 
-                                                        ss_tolerance=ss_tolerance)
+                                                        ss_tolerance=ss_tolerance,
+                                                        offset=offset)
     # cooling
     k_c, tau_c, t_out_c, y_out_c = find_first_order_sys(data=force_data, 
                                                         t=t, 
@@ -91,7 +95,8 @@ def first_order_model(force_data, t, ss_tolerance=40, trim_index=55, recording_f
                                                         stop=-1, 
                                                         type="decay",
                                                         ss_tolerance=ss_tolerance,
-                                                        ss_val=k_h)
+                                                        ss_val=k_h,
+                                                        offset=offset)
 
     y_out_c = growth_to_decay(y_out_c, k_c)
 
