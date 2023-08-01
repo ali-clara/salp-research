@@ -19,9 +19,9 @@ pulse_length = 30
 
 ## -------------------- Preprocessing -------------------- ##
 
-# convert to milinewtons
 def g_to_mn(data):
-    """Args
+    """ Convert data to milinewtons
+    Args
         data - list of force values (g)"""
     mn = np.array(data) * 9.81
     return mn
@@ -63,7 +63,7 @@ def force_preprocessing(data_names, path):
         data_names - array of strings, names of the data to be preprocessed
         path - string, where the data lives
     Returns 
-        big_data_array - array of raw force data (mN)
+        big_data_array - array of raw force data (g)
         t - time (sec)"""
     big_data_array = []
     for name in data_names:
@@ -87,7 +87,7 @@ def strain_preprocessing(data_names, path, og_lengths):
         path - string, where the data lives
         og_lengths - resting length of TCA corresponding to each data collection
     Returns 
-        big_data_array - array of raw force data (mN)
+        big_data_array - array of raw strain data (mm)
         t - time (sec)"""
     big_data_array = []
     for i, name in enumerate(data_names):
@@ -151,126 +151,127 @@ def align_yaxis(ax1, ax2):
 
 ###### ------------------ Flight Code ------------------ #########
 
+if __name__ == "__main__":
 
-force_data_names = ["load-cell-data_1.csv", 
-                    "load-cell-data_2.csv", 
-                    "load-cell-data_3.csv"]
+    force_data_names = ["load-cell-data_1.csv", 
+                        "load-cell-data_2.csv", 
+                        "load-cell-data_3.csv"]
 
-strain_data_names = ["encoder-data_1.csv",
-                     "encoder-data_1-1.csv",
-                     "encoder-data_2.csv",
-                     "encoder-data_3.csv"]
+    strain_data_names = ["encoder-data_1.csv",
+                        "encoder-data_1-1.csv",
+                        "encoder-data_2.csv",
+                        "encoder-data_3.csv"]
 
-encoder_tca_lengths_10g = [129.4, 129.4, 125.6, 106.2]
+    encoder_tca_lengths_10g = [129.4, 129.4, 125.6, 106.2]
 
-assert len(strain_data_names) == len(encoder_tca_lengths_10g), "strain data and TCA lengths should match"
+    assert len(strain_data_names) == len(encoder_tca_lengths_10g), "strain data and TCA lengths should match"
 
-def get_and_plot_force():
-    power_input = ["1W", "2W", "3W", "4W"]
+    def get_and_plot_force():
+        power_input = ["1W", "2W", "3W", "4W"]
 
-    my_plot = MakePlot()
+        my_plot = MakePlot()
 
-    for power in power_input:
-        data_path = "force_data/"+power+"/"
-        raw_force_data, t, input_data = force_preprocessing(force_data_names, data_path)
-        data_avg, data_stdv = find_data_avg(raw_force_data)
+        for power in power_input:
+            data_path = "force_data/"+power+"/"
+            raw_force_data, t, input_data = force_preprocessing(force_data_names, data_path)
+            data_avg, data_stdv = find_data_avg(raw_force_data)
 
-        ss_val = first_order_fit.find_ss(data_avg, tol=40)
+            ss_val = first_order_fit.find_ss(data_avg, tol=40)
 
-        heating_params, cooling_params = first_order_fit.first_order_model(data_avg,
-                                                                     t,
-                                                                     ss_tolerance=15,
-                                                                     trim_index=trim_index)
-   
-        k_h, tau_h, t_out_h, y_out_h = heating_params
-        k_c, tau_c, t_out_c, y_out_c = cooling_params
+            heating_params, cooling_params = first_order_fit.first_order_model(data_avg,
+                                                                        t,
+                                                                        ss_tolerance=15,
+                                                                        trim_index=trim_index)
+    
+            k_h, tau_h, t_out_h, y_out_h = heating_params
+            k_c, tau_c, t_out_c, y_out_c = cooling_params
 
-        k_h = k_h/int(power[0])
-        k_c = k_c/int(power[0])
+            k_h = k_h/int(power[0])
+            k_c = k_c/int(power[0])
 
-        print(power)
-        print(f"Heating: tau = {round(tau_h,3)}, k = {round(k_h,3)}")
-        print(f"Cooling: tau = {round(tau_c,3)}, k = {round(k_c,3)}")
+            print(power)
+            print(f"Heating: tau = {round(tau_h,3)}, k = {round(k_h,3)}")
+            print(f"Cooling: tau = {round(tau_c,3)}, k = {round(k_c,3)}")
 
-        my_plot.set_xy(t, data_avg)
-        my_plot.set_stdev(data_stdv)
-        my_plot.set_axis_labels("Time (sec)", "Force (mN)")
-        my_plot.set_data_labels(power)
-        my_plot.set_savefig("figs/force-figs/force-first-order-model.png")
-        my_plot.plot_xy()
+            my_plot.set_xy(t, data_avg)
+            my_plot.set_stdev(data_stdv)
+            my_plot.set_axis_labels("Time (sec)", "Force (mN)")
+            my_plot.set_data_labels(power)
+            my_plot.set_savefig("figs/force-figs/force-first-order-model.png")
+            my_plot.plot_xy()
 
-        # heating first order model
-        my_plot.use_same_color()
-        my_plot.set_xy(t_out_h, y_out_h, '--')
-        my_plot.plot_xy()
+            # heating first order model
+            my_plot.use_same_color()
+            my_plot.set_xy(t_out_h, y_out_h, '--')
+            my_plot.plot_xy()
 
-        # cooling first order model
-        my_plot.use_same_color()
-        my_plot.set_xy(t_out_c, y_out_c, '--')
-        my_plot.plot_xy()
+            # cooling first order model
+            my_plot.use_same_color()
+            my_plot.set_xy(t_out_c, y_out_c, '--')
+            my_plot.plot_xy()
 
-    my_plot.label_and_save()
+        my_plot.label_and_save()
 
 
-def get_and_plot_strain():
-    power_input = ["1W", "2W", "3W"]
+    def get_and_plot_strain():
+        power_input = ["1W", "2W", "3W"]
 
-    my_plot = MakePlot()
+        my_plot = MakePlot()
 
-    for power in power_input:
-        data_path = "encoder_data/"+power+"/"
-        raw_strain_data, t, input_data = strain_preprocessing(strain_data_names, data_path, encoder_tca_lengths_10g)
-        raw_data_avg, raw_data_stdv = find_data_avg(raw_strain_data)
-        
-        filtered_strain_data, filtered_t = filter_data(raw_strain_data, t)
-        filtered_data_avg, filtered_data_stdv = find_data_avg(filtered_strain_data)
+        for power in power_input:
+            data_path = "encoder_data/"+power+"/"
+            raw_strain_data, t, input_data = strain_preprocessing(strain_data_names, data_path, encoder_tca_lengths_10g)
+            raw_data_avg, raw_data_stdv = find_data_avg(raw_strain_data)
+            
+            filtered_strain_data, filtered_t = filter_data(raw_strain_data, t)
+            filtered_data_avg, filtered_data_stdv = find_data_avg(filtered_strain_data)
 
-        k_h, tau_h, t_out_h, y_out_h = first_order_fit.find_first_order_sys(raw_data_avg, t, 
-                                                                    start=55, stop=int(40/0.2), 
-                                                                    type='decay', ss_tolerance=0.001,
-                                                                    offset = 1.0)
-        
-        y_out_h = 1 - y_out_h
+            k_h, tau_h, t_out_h, y_out_h = first_order_fit.find_first_order_sys(raw_data_avg, t, 
+                                                                        start=55, stop=int(40/0.2), 
+                                                                        type='decay', ss_tolerance=0.001,
+                                                                        offset = 1.0)
+            
+            y_out_h = 1 - y_out_h
 
-        k_h = k_h/int(power[0])
-        # k_c = k_c/int(power[0])
+            k_h = k_h/int(power[0])
+            # k_c = k_c/int(power[0])
 
-        print(power)
-        print(f"Heating: tau = {round(tau_h,3)}, k = {round(k_h,3)}")
+            print(power)
+            print(f"Heating: tau = {round(tau_h,3)}, k = {round(k_h,3)}")
 
-        my_plot.set_axis_labels("Time (sec)", "Strain")
-        my_plot.set_data_labels(power)
-        
-        # filtered data average
-        # my_plot.set_xy(filtered_t, [filtered_data_avg])
-        # my_plot.set_stdev([filtered_data_stdv])
-        # my_plot.set_savefig("figs/encoder-figs/encoder-filtered-data.png")
-        # my_plot.plot_xy()
+            my_plot.set_axis_labels("Time (sec)", "Strain")
+            my_plot.set_data_labels(power)
+            
+            # filtered data average
+            # my_plot.set_xy(filtered_t, [filtered_data_avg])
+            # my_plot.set_stdev([filtered_data_stdv])
+            # my_plot.set_savefig("figs/encoder-figs/encoder-filtered-data.png")
+            # my_plot.plot_xy()
 
-        # raw data average
-        my_plot.set_xy(t, raw_data_avg)
-        my_plot.set_stdev(raw_data_stdv)
-        my_plot.set_savefig("figs/encoder-figs/encoder-raw-data-model.pdf")
-        my_plot.plot_xy()
+            # raw data average
+            my_plot.set_xy(t, raw_data_avg)
+            my_plot.set_stdev(raw_data_stdv)
+            my_plot.set_savefig("figs/encoder-figs/encoder-raw-data-model.pdf")
+            my_plot.plot_xy()
 
-        # heating first order model
-        my_plot.use_same_color()
-        my_plot.set_xy(t_out_h, y_out_h, '--')
-        my_plot.plot_xy()
+            # heating first order model
+            my_plot.use_same_color()
+            my_plot.set_xy(t_out_h, y_out_h, '--')
+            my_plot.plot_xy()
 
-        # cooling first order model
-        # my_plot.use_same_color()
-        # my_plot.set_xy(t_out_c, y_out_c, '--')
-        # my_plot.plot_xy()
+            # cooling first order model
+            # my_plot.use_same_color()
+            # my_plot.set_xy(t_out_c, y_out_c, '--')
+            # my_plot.plot_xy()
 
-        # raw data individuals
-        # fig, ax = plt.subplots(1,1)
-        # for data in raw_strain_data:
-        #     ax.plot(t, data)
-        
-        # plt.show()
+            # raw data individuals
+            # fig, ax = plt.subplots(1,1)
+            # for data in raw_strain_data:
+            #     ax.plot(t, data)
+            
+            # plt.show()
 
-    my_plot.label_and_save()
+        my_plot.label_and_save()
 
-get_and_plot_strain()
+    get_and_plot_strain()
 
