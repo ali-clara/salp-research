@@ -17,7 +17,7 @@ def crop_image(img):
     height = dimensions[0]
     width = dimensions[1]
 
-    w_margin = int(width/4)
+    w_margin = int(width/3)
     h_margin = int(height/3.5)
 
     # crop: img[y:y+h, x:x+w]
@@ -42,8 +42,9 @@ def mask_image(image, color, display=False):
         hsv_img = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
         masked_img = cv2.inRange(hsv_img, blue_min, blue_max)
     elif color == "black":
-        grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        masked_img = cv2.blur(grey, (3, 3))
+        # grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # masked_img = cv2.blur(image, (2, 2))
+        masked_img = image
     
     if display == True:
         cv2.imshow('hsv mask', masked_img)
@@ -62,15 +63,15 @@ def mm_to_pixel(mm, pix_per_mm):
 def area_of_circle(radius):
     return np.pi*radius**2
 
-def circumference(radius):
+def find_circumference(radius):
     return np.pi*2*radius
 
 ## ----------------- Contour Detection ----------------- ##
 
 def detect_edges(image, display=False):
     edge_detected_image = cv2.Canny(image, 
-                                    threshold1=100, 
-                                    threshold2=200)
+                                    threshold1=30, 
+                                    threshold2=130)
     
     if display == True:
         cv2.imshow('canny edge detection', edge_detected_image)
@@ -86,7 +87,7 @@ def detect_contours(raw_image, edge_image, cal_value, display=False):
     contours, hierarchy = cv2.findContours(edge_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     r = 14  # approximate radius of donut (mm)
-    c = circumference(r)    # circumference of donut (mm)
+    c = find_circumference(r)    # circumference of donut (mm)
 
     # many magic numbers, am working on generalizing
     contour_list = []
@@ -140,14 +141,14 @@ def calibration(cal_path):
 
             contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-            inner_square = contours[2]
-            inner_square_merged = merge_contours(inner_square)
-            perim = cv2.arcLength(inner_square_merged, True)
+            # inner_square = contours[2]
+            square_merged = merge_contours(contours)
+            perim = cv2.arcLength(square_merged, True)
             calibration_perimeter.append(perim)
             # print(perim)
 
             # to connect the dots, do [contour] instead of contour
-            cv2.drawContours(frame, inner_square_merged, -1, (255,0,0), 2)
+            cv2.drawContours(frame, [square_merged], -1, (255,0,0), 2)
             cv2.imshow("contours", frame)
 
             # cleanup if manually ended ("q" key pressed)
@@ -166,7 +167,8 @@ def calibration(cal_path):
 def video_capture(path_to_video, cal_value, color):
     cap = cv2.VideoCapture(path_to_video)
     circumference = []
- 
+    area_list = []
+
     # Loop until the end of the video
     while (cap.isOpened()):
         ret, frame = cap.read()
@@ -188,10 +190,14 @@ def video_capture(path_to_video, cal_value, color):
             if len(contour_list_filtered) != 0:
                 merged_contours = merge_contours(contour_list_filtered)
                 perimeter = cv2.arcLength(merged_contours, False)
+                area = cv2.contourArea(merged_contours)
                 perimeter = pixel_to_mm(perimeter, cal_value)
-                circumference.append(perimeter)
+                sqrt_area = pixel_to_mm(np.sqrt(area), cal_value)
 
-                cv2.drawContours(frame, merged_contours, -1, (0,0,255), 2)
+                circumference.append(perimeter)
+                area_list.append(sqrt_area**2)
+
+                cv2.drawContours(frame, [merged_contours], -1, (0,0,255), 2)
            
             cv2.imshow('Objects Detected', frame)
 
@@ -199,33 +205,38 @@ def video_capture(path_to_video, cal_value, color):
             if cv2.waitKey(25) & 0xFF == ord('q'):
                 cap.release()
                 cv2.destroyAllWindows()
-                return circumference
+                return circumference, area_list
         
         # cleanup if video ends
         else:
             cap.release()
             cv2.destroyAllWindows()
-            return circumference
+            return circumference, area_list
 
 ##  ----------------- Flight Code ----------------- ##
 
 if __name__ == "__main__":
-    img_path = "donut-screenshot.png"
-    vid_1 = "donut-video.mp4"
-    vid_2 = "donut-5W.mp4"
-    cal_path = "8-1-23/calibration.mp4"
+    img_path = "media/donut-screenshot.png"
+    vid_1 = "media/donut-video.mp4"
+    vid_2 = "media/donut-5W.mp4"
+    # cal_path = "media/8-1-23/calibration.mp4"
 
-    def calibrate():
+    def calibrate(cal_path):
         calibration_perim = calibration(cal_path)
         print(f"average: {np.mean(calibration_perim)}")
 
-        true_perim = 80 # mm
+        average_perim = np.mean(calibration_perim)
 
-        pix_per_mm = calibration_perim / true_perim
+        true_perim = 80 # mm, perimeter of 2x2cm square
+
+        pix_per_mm = average_perim / true_perim
+
+        return pix_per_mm
     
     def do_video(vid_path, pix_per_mm, donut_color="blue"):
-        circumference_list = video_capture(vid_path, pix_per_mm, donut_color)
-        np.save('circumference-5W.npy', np.array(circumference_list))
+        circumference_list, area_list = video_capture(vid_path, pix_per_mm, donut_color)
+        np.save('data/circumference_8-3-23.npy', np.array(circumference_list))
+        np.save('data/area_8-3-23.npy', np.array(area_list))
  
     def do_photo():
         raw_image = read_and_crop(img_path, display=True)
@@ -234,15 +245,23 @@ if __name__ == "__main__":
         # contour_list = detect_contours(raw_image, edge_image)
         # perimeter = cv2.arcLength(contour_list[0], True)
     
+    # calibration_value = calibrate("media/8-3-23/calibration.mp4") # number of pixels per mm of image, currently 7.31
+    # print(calibration_value)
     # do_video(vid_2, 7.31)
-    # do_video(5.3)
+    # do_video("media/8-3-23/lights_on.mp4", 7.31)
+    # do_video(5.3) 
 
-    circumference = np.load("circumference-5W.npy")
+    circumference = np.load("data/circumference_8-3-23.npy")
+    area = np.load("data/area_8-3-23.npy")
 
     x = np.linspace(0, 87, len(circumference))
 
-    fig, ax = plt.subplots(1,1)
-    ax.plot(x, circumference, '.')
-    ax.set_xlabel("Time (s)")
-    ax.set_ylabel("Circumference (mm)")
+    fig, ax = plt.subplots(2,1)
+    ax[0].plot(x, circumference, '.')
+    ax[0].set_xlabel("Time (s)")
+    ax[0].set_ylabel("Circumference (mm)")
+    ax[1].plot(x, area, '.')
+    ax[1].set_xlabel("Time (s)")
+    ax[1].set_ylabel("Contour Area (mm^2)")
+    ax[0].set_title("Donut Perimeter and Area, 5W Power")
     plt.show()
