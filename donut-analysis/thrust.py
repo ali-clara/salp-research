@@ -7,7 +7,9 @@ from sympy import Symbol
 import sympy
 
 fs = 60.0   # sample frequency Hz
-circumference = np.load("data/filtered-circumference_8-3-23.npy")   # mm
+circumference = np.load("data/filtered-circumference_8-11-23.npy")   # mm
+area = np.load("data/filtered-area-data_8-11-23.npy") # mm^2
+
 t = np.arange(0, 1/fs*len(circumference), 1/fs) # sec
 
 def radius_from_circumference(circumference):
@@ -17,6 +19,12 @@ def trim(data, t_start, t_stop):
     return data[t_start*int(fs):t_stop*int(fs)]
 
 def mm_to_m(data):
+    return data / 1000
+
+def mm2_to_m2(data):
+    return data / 1e6
+
+def mm3_to_ml(data):
     return data / 1000
 
 def finite_difference(f, x):
@@ -64,19 +72,29 @@ def find_volume_flux(r, r_dot):
 
 # circumference = trim(circumference, 0, 25) # mm
 # t = trim(t, 0, 25)
-r = radius_from_circumference(circumference)   # mm
-r = mm_to_m(r) # m
-r_dot = finite_difference(r, t)
+# r = radius_from_circumference(circumference)   # mm
+# r = mm_to_m(r) # m
+# r_dot = finite_difference(r, t)
 
-v_dot = find_volume_flux(r, -r_dot)
+# v_dot = find_volume_flux(r, -r_dot)
+# v_dot = mm3_to_ml(v_dot)
+
+a_dot = finite_difference(area, t) # mm^2/s
+v_from_a = mm3_to_ml(a_dot*0.01)
 
 fig, ax = plt.subplots(3,1)
-ax[0].plot(t, r, label="Measured Data")
-ax[1].plot(t, r_dot, label="Finite difference of measured data")
-ax[2].plot(t, v_dot)
+ax[0].plot(t, area, label="filtered area, mm^2")
+ax[0].legend(loc=0)
+ax[1].plot(t, a_dot, label="Finite difference, mm^2/s")
+ax[1].legend(loc=0)
+ax[2].plot(t, v_from_a, label="v dot, ml/s")
+ax[2].legend(loc=0)
 
 plt.tight_layout()
 plt.show()
+
+
+
 
 """
 a, b, y = do_curve_fit(t, radius)
