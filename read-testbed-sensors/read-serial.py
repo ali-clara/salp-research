@@ -31,11 +31,24 @@ while not keyboard.is_pressed("q"):
 print("Exiting data collection")
 
 # save data to csv
-# filename = "force_data/2W/load-cell-data_"+str(start_time)+".csv"
-filename = "encoder_data/4W/encoder-data_"+str(start_time)+".csv"
 
-with open (filename, 'w', encoding='UTF8', newline='') as f:
-    write = csv.writer(f)
-    write.writerows(sensor_data)
+############# CHANGE THESE PARAMS #############
+sensor = "encoder"
+watts = "2"
+
+try:
+    filename = sensor+"_data/"+watts+"W/"+sensor+"-data_"+str(start_time)+".csv"    
+    with open (filename, 'w', encoding='UTF8', newline='') as f:
+        write = csv.writer(f)
+        write.writerows(sensor_data)
+except FileNotFoundError:
+    print("Folder not found, check your working directory or your spelling. Saving to parent directory instead")
+    filename = str(start_time)+".csv"
+    with open (filename, 'w', encoding='UTF8', newline='') as f:
+        write = csv.writer(f)
+        write.writerows(sensor_data)
 
 print("Created file")
+
+# 8/15
+# first 2w - 154mm

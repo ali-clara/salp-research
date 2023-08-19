@@ -11,7 +11,7 @@
 Encoder enc(2, 3);
 long positionEnc  = -999;
 
-int signal_pin = 12;
+int signal_pin = 6;
 
 float disp_data;
 int signal_data;

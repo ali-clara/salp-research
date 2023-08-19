@@ -8,9 +8,14 @@ import sympy
 
 fs = 60.0   # sample frequency Hz
 circumference = np.load("data/filtered-circumference_8-11-23.npy")   # mm
-area = np.load("data/filtered-area-data_8-11-23.npy") # mm^2
+area = np.load("data/filtered-area-data_8-11-23.npy") # mm^
 
-t = np.arange(0, 1/fs*len(circumference), 1/fs) # sec
+area = area[20:]
+first = area[0]
+for i in range(300):
+    area = np.insert(area, 0, first)
+
+t = np.arange(0, 1/fs*len(area), 1/fs) # sec
 
 def radius_from_circumference(circumference):
     return circumference / (2*np.pi)
@@ -82,13 +87,17 @@ def find_volume_flux(r, r_dot):
 a_dot = finite_difference(area, t) # mm^2/s
 v_from_a = mm3_to_ml(a_dot*0.01)
 
-fig, ax = plt.subplots(3,1)
+fig, ax = plt.subplots(2,1)
 ax[0].plot(t, area, label="filtered area, mm^2")
 ax[0].legend(loc=0)
+ax[0].set_ylabel("Area (mm^s)")
+
 ax[1].plot(t, a_dot, label="Finite difference, mm^2/s")
 ax[1].legend(loc=0)
-ax[2].plot(t, v_from_a, label="v dot, ml/s")
-ax[2].legend(loc=0)
+ax[1].set_ylabel("dA/dt (mm^2/s)")
+
+# ax[2].plot(t, v_from_a, label="v dot, ml/s")
+# ax[2].legend(loc=0)
 
 plt.tight_layout()
 plt.show()

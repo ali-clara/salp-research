@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 
 
 # HSV mask values
-blue_min = np.array([80, 60, 51],np.uint8)
-blue_max = np.array([110, 255, 170],np.uint8)
+blue_min = np.array([70, 70, 50],np.uint8)
+blue_max = np.array([120, 255, 170],np.uint8)
 
 ## ----------------- Image Pre-Processing ----------------- ##
 
@@ -17,7 +17,7 @@ def crop_image(img):
     height = dimensions[0]
     width = dimensions[1]
 
-    w_margin = int(width/3)
+    w_margin = int(width/2.5)
     h_margin = int(height/3.5)
 
     # crop: img[y:y+h, x:x+w]
@@ -38,13 +38,13 @@ def read_and_crop(path, display=False):
 def mask_image(image, color, display=False):
     
     if color != "black":
-        blurred = cv2.blur(image, (9, 9))
+        blurred = cv2.blur(image, (10, 10))
         hsv_img = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
         masked_img = cv2.inRange(hsv_img, blue_min, blue_max)
     elif color == "black":
-        # grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        # masked_img = cv2.blur(image, (2, 2))
-        masked_img = image
+        grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        masked_img = cv2.blur(grey, (5, 5))
+        # masked_img = image
     
     if display == True:
         cv2.imshow('hsv mask', masked_img)
@@ -95,7 +95,7 @@ def detect_contours(raw_image, edge_image, cal_value, display=False):
         approx = cv2.approxPolyDP(contour,0.01*cv2.arcLength(contour,True),True)
         area = cv2.contourArea(contour)
         perimeter = cv2.arcLength(contour, True)
-        if ((len(approx) > 8) & (area > 13000) & (perimeter > 500) & (perimeter < 800)):
+        if ((len(approx) > 5) & (area > 10000) & (perimeter > 400) & (perimeter < 800)):
         # if ((len(approx) > 8) & 
         #     (area > area_of_circle(mm_to_pixel(r, pix_per_mm=cal_value))) & 
         #     (perimeter > mm_to_pixel((c-70), pix_per_mm=cal_value)) & 
@@ -168,6 +168,7 @@ def video_capture(path_to_video, cal_value, color):
     cap = cv2.VideoCapture(path_to_video)
     circumference = []
     area_list = []
+    t = []
 
     # Loop until the end of the video
     while (cap.isOpened()):
@@ -184,7 +185,7 @@ def video_capture(path_to_video, cal_value, color):
             # find image contours
             contour_list_raw, contour_list_filtered = detect_contours(raw_image=frame, edge_image=edges, cal_value=cal_value)
             
-            # cv2.drawContours(frame, contour_list_raw, 6, (0,255,0), 2)
+            # cv2.drawContours(frame, contour_list_raw, 2, (0,255,0), 2)
             # cv2.imshow("raw contours", frame)
 
             if len(contour_list_filtered) != 0:
@@ -193,9 +194,11 @@ def video_capture(path_to_video, cal_value, color):
                 area = cv2.contourArea(merged_contours)
                 perimeter = pixel_to_mm(perimeter, cal_value)
                 sqrt_area = pixel_to_mm(np.sqrt(area), cal_value)
+                timestamp = cap.get(cv2.CAP_PROP_POS_MSEC)
 
                 circumference.append(perimeter)
                 area_list.append(sqrt_area**2)
+                t.append(timestamp / 1000.0)
 
                 cv2.drawContours(frame, [merged_contours], -1, (0,0,255), 2)
            
@@ -205,13 +208,13 @@ def video_capture(path_to_video, cal_value, color):
             if cv2.waitKey(25) & 0xFF == ord('q'):
                 cap.release()
                 cv2.destroyAllWindows()
-                return circumference, area_list
+                return circumference, area_list, t
         
         # cleanup if video ends
         else:
             cap.release()
             cv2.destroyAllWindows()
-            return circumference, area_list
+            return circumference, area_list, t
 
 ##  ----------------- Flight Code ----------------- ##
 
@@ -223,20 +226,27 @@ if __name__ == "__main__":
 
     def calibrate(cal_path):
         calibration_perim = calibration(cal_path)
-        print(f"average: {np.mean(calibration_perim)}")
-
         average_perim = np.mean(calibration_perim)
-
         true_perim = 80 # mm, perimeter of 2x2cm square
 
         pix_per_mm = average_perim / true_perim
 
+        print(f"The average calibration square perimeter was {average_perim} px")
+        print(f"Calibration value: {pix_per_mm} pix/mm")
+
         return pix_per_mm
     
-    def do_video(vid_path, pix_per_mm, donut_color="blue"):
-        circumference_list, area_list = video_capture(vid_path, pix_per_mm, donut_color)
-        np.save('data/circumference_8-3-23.npy', np.array(circumference_list))
-        np.save('data/area_8-3-23.npy', np.array(area_list))
+    def do_video(vid_path, pix_per_mm, file_date, file_name, donut_color="blue"):
+        circumference_list, area_list, t = video_capture(vid_path, pix_per_mm, donut_color)
+        try: 
+            np.save('data/'+file_date+'/circ_'+file_name+'.npy', np.array(circumference_list))
+            np.save('data/'+file_date+'/area_'+file_name+'.npy', np.array(area_list))
+            np.save('data/'+file_date+'/t_'+file_name+'.npy', np.array(t))
+        except FileNotFoundError:
+            print("Folder not found, check your working directory or your spelling. Saving to parent directory instead")
+            np.save('circ_'+file_name+'.npy', np.array(circumference_list))
+            np.save('area_'+file_name+'.npy', np.array(area_list))
+            np.save('t_'+file_name+'.npy', np.array(t))
  
     def do_photo():
         raw_image = read_and_crop(img_path, display=True)
@@ -245,23 +255,22 @@ if __name__ == "__main__":
         # contour_list = detect_contours(raw_image, edge_image)
         # perimeter = cv2.arcLength(contour_list[0], True)
     
-    # calibration_value = calibrate("media/8-3-23/calibration.mp4") # number of pixels per mm of image, currently 7.31
-    # print(calibration_value)
+    # calibration_value = calibrate("media/8-16-23/calibration.mp4") # number of pixels per mm of image, currently 7.31
+
     # do_video(vid_2, 7.31)
-    # do_video("media/8-3-23/lights_on.mp4", 7.31)
-    # do_video(5.3) 
+    do_video("media/8-16-23/5W.mp4", pix_per_mm=8.06, file_date="8-16-23", file_name="5W")
 
-    circumference = np.load("data/circumference_8-3-23.npy")
-    area = np.load("data/area_8-3-23.npy")
+    # circumference = np.load("data/8-16-23/circ_5W.npy")
+    # area = np.load("data/8-16-23/area_5W.npy")
+    # t = np.load("data/8-16-23/t_5W.npy")
 
-    x = np.linspace(0, 87, len(circumference))
-
-    fig, ax = plt.subplots(2,1)
-    ax[0].plot(x, circumference, '.')
-    ax[0].set_xlabel("Time (s)")
-    ax[0].set_ylabel("Circumference (mm)")
-    ax[1].plot(x, area, '.')
-    ax[1].set_xlabel("Time (s)")
-    ax[1].set_ylabel("Contour Area (mm^2)")
-    ax[0].set_title("Donut Perimeter and Area, 5W Power")
-    plt.show()
+    # fig, ax = plt.subplots(2,1)
+    # ax[0].plot(t, circumference, '.')
+    # ax[0].set_xlabel("Time (s)")
+    # ax[0].set_ylabel("Circumference (mm)")
+    # ax[1].plot(t, area, '.')
+    # ax[1].set_xlabel("Time (s)")
+    # ax[1].set_ylabel("Contour Area (mm^2)")
+    # ax[0].set_title("Donut Perimeter and Area, 5W Power")
+    # plt.tight_layout()
+    # plt.show()

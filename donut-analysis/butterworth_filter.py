@@ -54,20 +54,22 @@ if __name__ == "__main__":
     fs = 60.0       # sample rate, Hz
 
     # load data
-    circ = np.load("data/circumference_8-3-23.npy")
-    area = np.load("data/area_8-3-23.npy")
-    t = np.arange(0, 1/fs*len(circ), 1/fs)
+    file_name = "5W"  
+    file_date = "8-16-23"
+    circ = np.load("data/"+file_date+"/circ_"+file_name+".npy")
+    area = np.load("data/"+file_date+"/area_"+file_name+".npy")
+    t = np.load("data/"+file_date+"/t_"+file_name+".npy")
 
     # order = 2
     # fs = 30.0
     # cutoff = 0.07
 
-    order = 2
-    cutoff = 0.07  # desired cutoff frequency of the filter, Hz
+    order = 1   # order of the filter, lower is a tighter fit
+    cutoff = 0.1    # desired cutoff frequency of the filter, Hz
     filtered_circ = do_filtering_process(circ, cutoff, fs, order)
 
     order = 1
-    cutoff = 0.06
+    cutoff = 0.17
     filtered_area = do_filtering_process(area, cutoff, fs, order)
 
     fig, ax = plt.subplots(2,1)
@@ -81,10 +83,11 @@ if __name__ == "__main__":
     ax[1].set_xlabel('Time [sec]')
     ax[1].legend()
 
+    plt.tight_layout()
     plt.show()
 
-    np.save("data/filtered-circumference_8-11-23.npy", filtered_circ)
-    np.save("data/filtered-area-data_8-11-23.npy", filtered_area)
+    np.save("data/"+file_date+"/circ_"+file_name+"_filtered.npy", filtered_circ)
+    np.save("data/"+file_date+"/area_"+file_name+"_filtered.npy", filtered_area)
 
     # data_to_export = list(zip(*[t, data, filtered_data, area]))
     # columns = ["time(sec)", "Raw circumference (mm)", "Filtered circumference (mm)", "Raw Area (mm^2)"]
