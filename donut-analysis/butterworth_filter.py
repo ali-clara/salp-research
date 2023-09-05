@@ -54,9 +54,9 @@ if __name__ == "__main__":
     fs = 60.0       # sample rate, Hz
 
     # load data
-    file_name = "5W"  
-    file_date = "8-16-23"
-    circ = np.load("data/"+file_date+"/circ_"+file_name+".npy")
+    file_name = "avg" 
+    file_date = "8-31-23"
+    # circ = np.load("data/"+file_date+"/circ_"+file_name+".npy")
     area = np.load("data/"+file_date+"/area_"+file_name+".npy")
     t = np.load("data/"+file_date+"/t_"+file_name+".npy")
 
@@ -64,19 +64,21 @@ if __name__ == "__main__":
     # fs = 30.0
     # cutoff = 0.07
 
-    order = 1   # order of the filter, lower is a tighter fit
-    cutoff = 0.1    # desired cutoff frequency of the filter, Hz
-    filtered_circ = do_filtering_process(circ, cutoff, fs, order)
+    # circumference
+    # order = 1   # order of the filter, lower is a tighter fit
+    # cutoff = 0.1    # desired cutoff frequency of the filter, Hz
+    # filtered_circ = do_filtering_process(circ, cutoff, fs, order)
 
+    # area
     order = 1
-    cutoff = 0.17
+    cutoff = 0.13
     filtered_area = do_filtering_process(area, cutoff, fs, order)
 
     fig, ax = plt.subplots(2,1)
-    ax[0].plot(t, circ, '.', label='raw data')
-    ax[0].plot(t, filtered_circ, '-', color="tab:red", linewidth=2, label='filtered data')
-    ax[0].set_xlabel('Time [sec]')
-    ax[0].legend()
+    # ax[0].plot(t, circ, '.', label='raw data')
+    # ax[0].plot(t, filtered_circ, '-', color="tab:red", linewidth=2, label='filtered data')
+    # ax[0].set_xlabel('Time [sec]')
+    # ax[0].legend()
 
     ax[1].plot(t, area, '.', label='raw data')
     ax[1].plot(t, filtered_area, '-', color="tab:red", linewidth=2, label='filtered data')
@@ -86,7 +88,7 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.show()
 
-    np.save("data/"+file_date+"/circ_"+file_name+"_filtered.npy", filtered_circ)
+    # np.save("data/"+file_date+"/circ_"+file_name+"_filtered.npy", filtered_circ)
     np.save("data/"+file_date+"/area_"+file_name+"_filtered.npy", filtered_area)
 
     # data_to_export = list(zip(*[t, data, filtered_data, area]))

@@ -7,8 +7,14 @@ import matplotlib.pyplot as plt
 
 
 # HSV mask values
-blue_min = np.array([70, 70, 50],np.uint8)
-blue_max = np.array([120, 255, 170],np.uint8)
+
+# 1
+blue_min = np.array([55, 30, 40],np.uint8)
+blue_max = np.array([170, 255, 165],np.uint8)
+
+# 3b
+# blue_min = np.array([55, 30, 40],np.uint8)
+# blue_max = np.array([170, 255, 155],np.uint8)
 
 ## ----------------- Image Pre-Processing ----------------- ##
 
@@ -17,8 +23,8 @@ def crop_image(img):
     height = dimensions[0]
     width = dimensions[1]
 
-    w_margin = int(width/2.5)
-    h_margin = int(height/3.5)
+    w_margin = int(width/3.5)
+    h_margin = int(height/3)
 
     # crop: img[y:y+h, x:x+w]
     img = img[h_margin:(height-h_margin), w_margin:(width-w_margin)]
@@ -43,8 +49,8 @@ def mask_image(image, color, display=False):
         masked_img = cv2.inRange(hsv_img, blue_min, blue_max)
     elif color == "black":
         grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        masked_img = cv2.blur(grey, (5, 5))
-        # masked_img = image
+        blurred = cv2.blur(grey, (10, 10))
+        masked_img = blurred
     
     if display == True:
         cv2.imshow('hsv mask', masked_img)
@@ -95,13 +101,13 @@ def detect_contours(raw_image, edge_image, cal_value, display=False):
         approx = cv2.approxPolyDP(contour,0.01*cv2.arcLength(contour,True),True)
         area = cv2.contourArea(contour)
         perimeter = cv2.arcLength(contour, True)
-        if ((len(approx) > 5) & (area > 10000) & (perimeter > 400) & (perimeter < 800)):
+        if ((len(approx) > 8) & (area > 10000) & (perimeter > 400) & (perimeter < 800)):
         # if ((len(approx) > 8) & 
         #     (area > area_of_circle(mm_to_pixel(r, pix_per_mm=cal_value))) & 
         #     (perimeter > mm_to_pixel((c-70), pix_per_mm=cal_value)) & 
         #     (perimeter < mm_to_pixel((c+70), pix_per_mm=cal_value))):
 
-            print(f"appending contour {i} to list")
+            # print(f"appending contour {i} to list")
             contour_list.append(contour)
 
     if display == True:
@@ -136,16 +142,14 @@ def calibration(cal_path):
             # do some preprocessing
             frame = crop_image(frame)
             masked_frame = mask_image(frame, color="black")
+            cv2.imshow("mask", masked_frame)
             edges = detect_edges(masked_frame)
             cv2.imshow("edges", edges)
 
             contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-            # inner_square = contours[2]
             square_merged = merge_contours(contours)
             perim = cv2.arcLength(square_merged, True)
             calibration_perimeter.append(perim)
-            # print(perim)
 
             # to connect the dots, do [contour] instead of contour
             cv2.drawContours(frame, [square_merged], -1, (255,0,0), 2)
@@ -188,20 +192,26 @@ def video_capture(path_to_video, cal_value, color):
             # cv2.drawContours(frame, contour_list_raw, 2, (0,255,0), 2)
             # cv2.imshow("raw contours", frame)
 
+            # if we can grab a contour, record the area and circumference. Otherwise record NAN
             if len(contour_list_filtered) != 0:
                 merged_contours = merge_contours(contour_list_filtered)
                 perimeter = cv2.arcLength(merged_contours, False)
                 area = cv2.contourArea(merged_contours)
                 perimeter = pixel_to_mm(perimeter, cal_value)
                 sqrt_area = pixel_to_mm(np.sqrt(area), cal_value)
-                timestamp = cap.get(cv2.CAP_PROP_POS_MSEC)
-
+                
                 circumference.append(perimeter)
                 area_list.append(sqrt_area**2)
-                t.append(timestamp / 1000.0)
-
+        
                 cv2.drawContours(frame, [merged_contours], -1, (0,0,255), 2)
-           
+            else:
+                area_list.append(np.nan)
+                circumference.append(np.nan)
+            
+            # grab timestamp
+            timestamp = cap.get(cv2.CAP_PROP_POS_MSEC)
+            t.append(timestamp / 1000.0)
+            
             cv2.imshow('Objects Detected', frame)
 
             # cleanup if manually ended ("q" key pressed)
@@ -227,7 +237,7 @@ if __name__ == "__main__":
     def calibrate(cal_path):
         calibration_perim = calibration(cal_path)
         average_perim = np.mean(calibration_perim)
-        true_perim = 80 # mm, perimeter of 2x2cm square
+        true_perim = 81.33 # mm, measured perimeter of square
 
         pix_per_mm = average_perim / true_perim
 
@@ -255,22 +265,33 @@ if __name__ == "__main__":
         # contour_list = detect_contours(raw_image, edge_image)
         # perimeter = cv2.arcLength(contour_list[0], True)
     
-    # calibration_value = calibrate("media/8-16-23/calibration.mp4") # number of pixels per mm of image, currently 7.31
+    # calibration_value = calibrate("media/8-31-23/calibration-1.mp4") # number of pixels per mm of image
 
     # do_video(vid_2, 7.31)
-    do_video("media/8-16-23/5W.mp4", pix_per_mm=8.06, file_date="8-16-23", file_name="5W")
+    # do_video("media/8-16-23/5W.mp4", pix_per_mm=8.06, file_date="8-16-23", file_name="5W")
 
-    # circumference = np.load("data/8-16-23/circ_5W.npy")
-    # area = np.load("data/8-16-23/area_5W.npy")
-    # t = np.load("data/8-16-23/t_5W.npy")
+    
+    names = ["1a", "1b", "2a", "2b", "3a", "3b"]
+    for name in names:
+        do_video("media/8-31-23/donut-"+name+".mp4", pix_per_mm=8.57, file_date="8-31-23", file_name=name)
 
-    # fig, ax = plt.subplots(2,1)
-    # ax[0].plot(t, circumference, '.')
-    # ax[0].set_xlabel("Time (s)")
-    # ax[0].set_ylabel("Circumference (mm)")
-    # ax[1].plot(t, area, '.')
-    # ax[1].set_xlabel("Time (s)")
-    # ax[1].set_ylabel("Contour Area (mm^2)")
-    # ax[0].set_title("Donut Perimeter and Area, 5W Power")
-    # plt.tight_layout()
+
+    # a1 = np.load("data/8-31-23/area_1a.npy")
+    # t1 = np.load("data/8-31-23/t_1a.npy")
+    # a1b = np.load("data/8-31-23/area_1b.npy")
+    # t1b = np.load("data/8-31-23/t_1b.npy")
+    # a2 = np.load("data/8-31-23/area_2a.npy")
+    # t2 = np.load("data/8-31-23/t_2a.npy")
+
+    # print(len(a2))
+    # print(t2[3500])
+
+    # print(len(a1))
+    # print(t1[3500])
+
+    # fig, ax = plt.subplots(1,1)
+    # ax.plot(t1, a1)
+    # ax.plot(t1b, a1b)
+    # ax.plot(t2, a2)
     # plt.show()
+

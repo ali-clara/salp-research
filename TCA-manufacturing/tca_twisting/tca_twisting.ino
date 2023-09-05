@@ -18,7 +18,7 @@ void setup() {
   
   // calculate goal position
   length = 1.0;    // meters -- CHANGE BASED ON THREAD LENGTH
-  twists_per_m = 720;
+  twists_per_m = 700;
   goal_pos = length*twists_per_m*steps_per_rev;
 
   myStepper.setMaxSpeed(1000.0);
