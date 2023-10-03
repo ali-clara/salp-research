@@ -51,9 +51,10 @@ def graph_values(values, times, avg, avg_time, stdv):
     ax[0].set_xlim([-2,60])
     ax[0].set_xlabel("Time (s)")
     ax[0].set_ylabel("Contour Area (mm^2)")
-    ax[0].set_title("Donut Perimeter and Area, 5W Power")
+    ax[0].set_title("Soft Module Area, 5W Power")
 
     plt.tight_layout()
+    plt.savefig("total_donut_response.png")
     plt.show()
 
 areas, times = load_and_compile("data/8-31-23", num_trials=3)

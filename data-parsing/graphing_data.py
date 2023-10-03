@@ -12,7 +12,8 @@ import first_order_fit_2
 ## -------------------- Global parameters -------------------- ##
 
 # how much data to save on either side of the pulse
-trim_index = 55
+# trim_index = 55
+trim_index = 85
 # rate at which data was taken (sec)
 recording_frequency = 0.2
 # length of input singnal pulse (sec)
@@ -160,13 +161,24 @@ if __name__ == "__main__":
                         "load-cell-data_2.csv", 
                         "load-cell-data_3.csv"]
 
-    strain_data_names = ["encoder-data_1.csv",
-                        "encoder-data_1-1.csv",
-                        "encoder-data_2.csv",
-                        "encoder-data_4.csv",
-                        "encoder-data_5.csv"]
+    # strain_data_names = ["encoder-data_1.csv",
+    #                     "encoder-data_1-1.csv",
+    #                     "encoder-data_2.csv",
+    #                     "encoder-data_4.csv",
+    #                     "encoder-data_5.csv"]
+    
+    strain_data_names = {"1W": ["encoder_1.csv","encoder_1-1.csv","encoder_2.csv","encoder_3.csv","encoder_4.csv"],
+                         "2W": ["encoder_1-1.csv","encoder_2.csv","encoder_4.csv"],
+                         "3W": ["encoder_1a.csv","encoder_2a.csv","encoder_3a","encoder_4a.csv","encoder_5a.csv"],
+                         "4W": ["encoder_4.csv","encoder_5.csv","encoder_6.csv","encoder_7.csv"]}
 
-    encoder_tca_lengths_10g = [129.4, 129.4, 125.6, 148.4, 152.5]
+    encoder_tca_lengths_10g = {"1W": [129.4, 129.4, 125.6, 148.4, 152.5],
+                               "2W": [129.4, 125.6, 152.5],
+                               "3W": [148.3, 148.3, 151.9, 146.0, 154],
+                               "4W": [134, 134, 135, 135.5]}
+    
+    # 3W full - [148.3, 148.3, 151.9, 146.0, 154]. 3a was outlier
+    # 4W full - [147.8, 149.5, 143.8, 134, 134, 135, 135]
 
     assert len(strain_data_names) == len(encoder_tca_lengths_10g), "strain data and TCA lengths should match"
 
@@ -195,7 +207,6 @@ if __name__ == "__main__":
                                                                             pulse_stop_index, len(t),
                                                                             growth=False, ss_tol=5)
             
-
             k_h = k_h/int(power[0])
             k_c = k_c/int(power[0])
 
@@ -224,13 +235,16 @@ if __name__ == "__main__":
 
 
     def get_and_plot_strain():
-        power_input = ["1W", "2W", "3W"]
+        power_input = ["1W", "2W", "3W", "4W"]
 
         my_plot = MakePlot()
 
         for power in power_input:
             data_path = "encoder_data/"+power+"/"
-            raw_strain_data, t, input_data = strain_preprocessing(strain_data_names, data_path, encoder_tca_lengths_10g)
+            print(strain_data_names[power])
+            print(encoder_tca_lengths_10g[power])
+
+            raw_strain_data, t, input_data = strain_preprocessing(strain_data_names[power], data_path, encoder_tca_lengths_10g[power])
             raw_data_avg, raw_data_stdv = find_data_avg(raw_strain_data)
             
             filtered_strain_data, filtered_t = filter_data(raw_strain_data, t)
@@ -264,18 +278,18 @@ if __name__ == "__main__":
             # my_plot.set_savefig("figs/encoder-figs/encoder-filtered-data.png")
             # my_plot.plot_xy()
 
-            np.save("time-vec.npy", t)
-            np.save("strain-data.npy", raw_data_avg)
+            # np.save("time-vec.npy", t)
+            # np.save("strain-data.npy", raw_data_avg)
 
             # raw data average
-            my_plot.set_xy(t, raw_data_avg)
+            my_plot.set_xy(t, raw_data_avg-1)
             my_plot.set_stdev(raw_data_stdv)
-            my_plot.set_savefig("figs/encoder-figs/encoder-raw-data-model.pdf")
+            my_plot.set_savefig("figs/encoder-figs/encoder-raw-data-model.png")
             my_plot.plot_xy()
 
             # heating first order model
             my_plot.use_same_color()
-            my_plot.set_xy(t_out_h, y_out_h, '--')
+            my_plot.set_xy(t_out_h, y_out_h-1, '--')
             my_plot.plot_xy()
 
             # check steady state values
@@ -285,14 +299,15 @@ if __name__ == "__main__":
 
             # cooling first order model
             my_plot.use_same_color()
-            my_plot.set_xy(t_out_c, y_out_c, '--')
+            my_plot.set_xy(t_out_c, y_out_c-1, '--')
             my_plot.plot_xy()
 
             # raw data individuals
             # fig, ax = plt.subplots(1,1)
-            # for data in raw_strain_data:
-            #     ax.plot(t, data)
+            # for i, data in enumerate(raw_strain_data):
+            #     ax.plot(t, data, label=i)
             
+            # plt.legend()
             # plt.show()
 
         my_plot.label_and_save()
@@ -300,22 +315,25 @@ if __name__ == "__main__":
     get_and_plot_strain()
 
     # fig, ax = plt.subplots(1,1)
-    # n = [1, 2, 4]
+    # n = [1, 2, 3, 4, 5, 6]
     # total_data = []
+    # lengths = [148.3, 148.3, 151.9, 146.0, 154, 135.3]
     # for i in n:
-    #     data = pd.read_csv("encoder_data/3W/encoder-data_"+str(i)+".csv")
+    #     data = pd.read_csv("encoder_data/3W/encoder_"+str(i)+"a.csv")
     #     disp_data = data["Linear displacement (mm)"].to_list()
     #     input_data = data["Input Signal"].to_list()
     #     disp, input_sig = trim_data(disp_data, input_data)
     #     total_data.append(disp)
+    #     # t = create_time_vector(disp)
+    #     # ax.plot(t, disp, label=i)
 
     # av = np.mean(total_data, axis=0)   
     # stdv = np.std(total_data, axis=0) 
 
-    # t = create_time_vector(disp)
+    # # t = create_time_vector(disp)
 
-    # ax.plot(t, av)
-    # ax.fill_between(t, av+stdv, av-stdv, alpha=0.5)
+    # # ax.plot(t, av)
+    # # ax.fill_between(t, av+stdv, av-stdv, alpha=0.5)
 
     # plt.legend()
     # plt.show()

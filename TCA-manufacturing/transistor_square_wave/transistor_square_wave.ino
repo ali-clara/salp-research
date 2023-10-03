@@ -1,7 +1,7 @@
 #include <stdbool.h>
 
 int start_delay = 10 * 1000; // ms
-int pulse_length = 30 * 1000; // ms
+int pulse_length = 10 * 1000; // ms
 int output_pin = 6;
 int finished_startup = 0;
 

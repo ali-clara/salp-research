@@ -34,7 +34,7 @@ print("Exiting data collection")
 
 ############# CHANGE THESE PARAMS #############
 sensor = "encoder"
-watts = "2"
+watts = "4"
 
 try:
     filename = sensor+"_data/"+watts+"W/"+sensor+"-data_"+str(start_time)+".csv"    
@@ -52,3 +52,17 @@ print("Created file")
 
 # 8/15
 # first 2w - 154mm
+
+#9/24
+# 3W
+# [148.3, 148.3, 151.9, 146.0, 154]
+# 2W
+# [154, ]
+# all ~13.3 ohms
+
+# 9/25
+# 3W
+# [135, 135, 146]
+
+# 4W
+
