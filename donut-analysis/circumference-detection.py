@@ -203,7 +203,7 @@ def video_capture(path_to_video, cal_value, color):
                 circumference.append(perimeter)
                 area_list.append(sqrt_area**2)
         
-                cv2.drawContours(frame, [merged_contours], -1, (0,0,255), 2)
+                cv2.drawContours(frame, [merged_contours], -1, (0,255,0), 2)
             else:
                 area_list.append(np.nan)
                 circumference.append(np.nan)
@@ -211,6 +211,7 @@ def video_capture(path_to_video, cal_value, color):
             # grab timestamp
             timestamp = cap.get(cv2.CAP_PROP_POS_MSEC)
             t.append(timestamp / 1000.0)
+            print(timestamp/1000)
             
             cv2.imshow('Objects Detected', frame)
 
@@ -271,7 +272,8 @@ if __name__ == "__main__":
     # do_video("media/8-16-23/5W.mp4", pix_per_mm=8.06, file_date="8-16-23", file_name="5W")
 
     
-    names = ["1a", "1b", "2a", "2b", "3a", "3b"]
+    # names = ["1a", "1b", "2a", "2b", "3a", "3b"]
+    names = ["2a"]
     for name in names:
         do_video("media/8-31-23/donut-"+name+".mp4", pix_per_mm=8.57, file_date="8-31-23", file_name=name)
 

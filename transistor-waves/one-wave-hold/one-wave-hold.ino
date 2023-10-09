@@ -7,7 +7,7 @@ int led4 = 9;
 
 long start_time = 5 * 1000; // (ms)
 long pulse_length = 60 * 1000;  // how long each LED is on or off (ms)
-long phase_shift = 10 * 1000; // delay between LEDs (ms)
+long phase_shift = 0 * 1000; // delay between LEDs (ms)
 
 int start0 = 0, start1 = 0, start2 = 0, start3 = 0, start4 = 0;
 int finished_startup = 0;
@@ -27,7 +27,7 @@ void setup() {
   pinMode(led4, OUTPUT);
 
   // delay long enough to let me clear the serial monitor and start the python script
-  // delay(5000);
+  delay(5000);
 
   // set up serial communication and print column headers
   // Serial.begin(9600);
@@ -92,49 +92,4 @@ void loop() {
       }
     }
   }
-      
-  else{
-  // do the normal thing
-
-    // if it's time to change the state of LED0
-    if (current_time - previous_time_led0 > pulse_length){
-      // update the previous time increment for led0
-      previous_time_led0 = current_time;
-      change_led(led0);
-      }
-    // if it's time to change the state of LED1
-    if (current_time - previous_time_led1 > pulse_length){
-      // update the previous time increment for led0
-      previous_time_led1 = current_time;
-      change_led(led1);
-      }
-    // if it's time to change the state of LED2
-    if (current_time - previous_time_led2 > pulse_length){
-      // update the previous time increment for led0
-      previous_time_led2 = current_time;
-      change_led(led2);
-      }
-    // if it's time to change the state of LED3
-    if (current_time - previous_time_led3 > pulse_length){
-      // update the previous time increment for led0
-      previous_time_led3 = current_time;
-      change_led(led3);
-      }
-    // if it's time to change the state of LED4
-    if (current_time - previous_time_led4 > pulse_length){
-      // update the previous time increment for led0
-      previous_time_led4 = current_time;
-      change_led(led4);
-      } 
-  }
-}
-
-void change_led(int led_pin) {
-  // either turn on or off led accordingly
-    if (digitalRead(led_pin) == HIGH){
-      digitalWrite(led_pin, LOW);
-    }
-    else{
-      digitalWrite(led_pin, HIGH);
-    }
 }

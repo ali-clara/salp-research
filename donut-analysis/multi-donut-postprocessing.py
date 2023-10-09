@@ -2,6 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.style.use('seaborn-deep')
 import pandas as pd
+import sys
+sys.path.append("C:\\Users\\alicl\\Documents\\GitHub\\salp-research")
+from create_paper_figure import MakePlot
 
 def trim(array):
     return array[0:3500]
@@ -34,6 +37,7 @@ def nan_interpolation(y):
 
 def graph_values(values, times, avg, avg_time, stdv):
     fig, ax = plt.subplots(2,1)
+    my_plot = MakePlot()
 
     for i, val in enumerate(values):
         
@@ -42,6 +46,14 @@ def graph_values(values, times, avg, avg_time, stdv):
         # ax[1].plot(t_a, circ_a, '.')
         # ax[1].plot(t_b, circ_b, '.')
 
+    my_plot.set_xy(avg_time, avg)
+    my_plot.set_stdev(stdv)
+    my_plot.set_axis_labels("Time (sec)", "Contour Area (mm^2)")
+    my_plot.plot_xy()
+    my_plot.set_savefig("avg_donut_response.pdf")
+    my_plot.label_and_save()
+
+    
     ax[1].plot(avg_time, avg)
     ax[1].fill_between(avg_time, avg+stdv, avg-stdv, alpha=0.5)
     ax[1].set_ylabel("Contour Area (mm^2)")

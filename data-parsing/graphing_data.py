@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as font_manager
 import pandas as pd
-
+import sys
+sys.path.append("C:\\Users\\alicl\\Documents\\GitHub\\salp-research")
 from create_paper_figure import MakePlot
 import low_pass_filter
 import first_order_fit
