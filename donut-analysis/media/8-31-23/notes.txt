@@ -1,0 +1,15 @@
+Naming convetion:
+    Red + black wiring: 1
+        9 ohms
+        Used 6.71 V
+    Yellow + orange wiring: 2
+        9.5 ohms
+        Used 6.82 V
+    Yellow + green wiring: 3
+        8 ohms
+        Used 6.32 V
+
+    First 25 second pulse: a
+    Second 25 second pulse: b
+
+All at 5W, no donuts folded

@@ -2,16 +2,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as font_manager
 import pandas as pd
-
+import sys
+sys.path.append("C:\\Users\\alicl\\Documents\\GitHub\\salp-research")
 from create_paper_figure import MakePlot
 import low_pass_filter
 import first_order_fit
+import first_order_fit_2
+
+import matplotlib
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype'] = 42
 
 
 ## -------------------- Global parameters -------------------- ##
 
 # how much data to save on either side of the pulse
 trim_index = 55
+# trim_index = 85
 # rate at which data was taken (sec)
 recording_frequency = 0.2
 # length of input singnal pulse (sec)
@@ -19,9 +26,9 @@ pulse_length = 30
 
 ## -------------------- Preprocessing -------------------- ##
 
-# convert to milinewtons
 def g_to_mn(data):
-    """Args
+    """ Convert data to milinewtons
+    Args
         data - list of force values (g)"""
     mn = np.array(data) * 9.81
     return mn
@@ -35,16 +42,20 @@ def disp_to_strain(data, lg):
 
 def trim_data(data_list, input_signal):
     """Args
-        force_data - list of force data to be trimmed
-        input_signal - list of corresponding input data"""
+            force_data - list of force data to be trimmed
+            input_signal - list of corresponding input data
+        Returns
+            tuple of trimmed data and input"""
     
     # find the first location of a '1' - pulse turned on
     pulse_start_index = input_signal.index(1)
     # find the first location of a '0' ~after~ the first '1' - pulse turned off
     pulse_stop_index = input_signal.index(0, pulse_start_index)
+
     # trim the force data according to those indices
-    trimmed_data = data_list[pulse_start_index-trim_index:pulse_stop_index+trim_index+1]
-    trimmed_input = input_signal[pulse_start_index-trim_index:pulse_stop_index+trim_index+1]
+    start_trim = int(10/0.2)
+    trimmed_data = data_list[pulse_start_index-start_trim:pulse_stop_index+trim_index+1]
+    trimmed_input = input_signal[pulse_start_index-start_trim:pulse_stop_index+trim_index+1]
 
     return trimmed_data, trimmed_input
 
@@ -63,7 +74,7 @@ def force_preprocessing(data_names, path):
         data_names - array of strings, names of the data to be preprocessed
         path - string, where the data lives
     Returns 
-        big_data_array - array of raw force data (mN)
+        big_data_array - array of raw force data (g)
         t - time (sec)"""
     big_data_array = []
     for name in data_names:
@@ -87,7 +98,7 @@ def strain_preprocessing(data_names, path, og_lengths):
         path - string, where the data lives
         og_lengths - resting length of TCA corresponding to each data collection
     Returns 
-        big_data_array - array of raw force data (mN)
+        big_data_array - array of raw strain data (mm)
         t - time (sec)"""
     big_data_array = []
     for i, name in enumerate(data_names):
@@ -151,104 +162,195 @@ def align_yaxis(ax1, ax2):
 
 ###### ------------------ Flight Code ------------------ #########
 
+if __name__ == "__main__":
 
-force_data_names = ["load-cell-data_1.csv", 
-                    "load-cell-data_2.csv", 
-                    "load-cell-data_3.csv"]
+    force_data_names = ["load-cell-data_1.csv", 
+                        "load-cell-data_2.csv", 
+                        "load-cell-data_3.csv"]
 
-strain_data_names = ["encoder-data_1.csv",
-                     "encoder-data_1-1.csv",
-                     "encoder-data_2.csv",
-                     "encoder-data_3.csv"]
+    # strain_data_names = ["encoder-data_1.csv",
+    #                     "encoder-data_1-1.csv",
+    #                     "encoder-data_2.csv",
+    #                     "encoder-data_4.csv",
+    #                     "encoder-data_5.csv"]
+    
+    strain_data_names = {"1W": ["encoder_1.csv","encoder_1-1.csv","encoder_2.csv","encoder_3.csv","encoder_4.csv"],
+                         "2W": ["encoder_1-1.csv","encoder_2.csv","encoder_4.csv"],
+                         "3W": ["encoder_1a.csv","encoder_2a.csv","encoder_3a","encoder_4a.csv","encoder_5a.csv"],
+                         "4W": ["encoder_4.csv","encoder_5.csv","encoder_6.csv","encoder_7.csv"]}
 
-encoder_tca_lengths_10g = [129.4, 129.4, 125.6, 106.2]
+    encoder_tca_lengths_10g = {"1W": [129.4, 129.4, 125.6, 148.4, 152.5],
+                               "2W": [129.4, 125.6, 152.5],
+                               "3W": [148.3, 148.3, 151.9, 146.0, 154],
+                               "4W": [134, 134, 135, 135.5]}
+    
+    # 3W full - [148.3, 148.3, 151.9, 146.0, 154]. 3a was outlier
+    # 4W full - [147.8, 149.5, 143.8, 134, 134, 135, 135]
 
-assert len(strain_data_names) == len(encoder_tca_lengths_10g), "strain data and TCA lengths should match"
+    assert len(strain_data_names) == len(encoder_tca_lengths_10g), "strain data and TCA lengths should match"
 
-def get_and_plot_force():
-    power_input = ["1W", "2W", "3W", "4W"]
+    def get_and_plot_force():
+        power_input = ["1W", "2W", "3W", "4W"]
 
-    my_plot = MakePlot()
+        my_plot = MakePlot()
 
-    for power in power_input:
-        data_path = "force_data/"+power+"/"
-        raw_force_data, t, input_data = force_preprocessing(force_data_names, data_path)
-        data_avg, data_stdv = find_data_avg(raw_force_data)
+        for power in power_input:
+            data_path = "force_data/"+power+"/"
+            raw_force_data, t, input_data = force_preprocessing(force_data_names, data_path)
+            data_avg, data_stdv = find_data_avg(raw_force_data)
 
-        ss_val = first_order_fit.find_ss(data_avg, tol=40)
+            np.save("force_data", data_avg)
+            np.save("t_force", t)
 
-        heating_params, cooling_params = first_order_fit.first_order_model(data_avg,
-                                                                     t,
-                                                                     ss_tolerance=15,
-                                                                     trim_index=trim_index)
-   
-        k_h, tau_h, t_out_h, y_out_h = heating_params
-        k_c, tau_c, t_out_c, y_out_c = cooling_params
+            pulse_start_index = trim_index
+            pulse_length_index = int(pulse_length / recording_frequency)
+            pulse_stop_index = pulse_start_index+pulse_length_index
 
-        k_h = k_h/int(power[0])
-        k_c = k_c/int(power[0])
+            t_out_h, y_out_h, k_h, tau_h = first_order_fit_2.find_first_order_fit(data_avg, t,
+                                                                            pulse_start_index, pulse_stop_index,
+                                                                            growth=True, ss_tol=15)
+            
+            t_out_c, y_out_c, k_c, tau_c = first_order_fit_2.find_first_order_fit(data_avg, t,
+                                                                            pulse_stop_index, len(t),
+                                                                            growth=False, ss_tol=5)
+            
+            k_h = k_h/int(power[0])
+            k_c = k_c/int(power[0])
 
-        print(power)
-        print(f"Heating: tau = {round(tau_h,3)}, k = {round(k_h,3)}")
-        print(f"Cooling: tau = {round(tau_c,3)}, k = {round(k_c,3)}")
+            print(power)
+            print(f"Heating: tau = {round(tau_h,3)}, k = {round(k_h,3)}")
+            print(f"Cooling: tau = {round(tau_c,3)}, k = {round(k_c,3)}")
 
-        my_plot.set_xy(t, data_avg)
-        my_plot.set_stdev(data_stdv)
-        my_plot.set_axis_labels("Time (sec)", "Force (mN)")
-        my_plot.set_data_labels(power)
-        my_plot.set_savefig("figs/force-figs/force-first-order-model.png")
-        my_plot.plot_xy()
+            my_plot.set_xy(t, data_avg)
+            my_plot.set_stdev(data_stdv)
+            my_plot.set_axis_labels("Time (sec)", "Force (mN)")
+            my_plot.set_data_labels(power)
+            my_plot.set_savefig("figs/force-figs/force.pdf")
+            my_plot.plot_xy()
 
-        # heating first order model
-        my_plot.use_same_color()
-        my_plot.set_xy(t_out_h, y_out_h, '--')
-        my_plot.plot_xy()
+            max_point = max(data_avg)
+            max_point_index = np.argmax(data_avg)
+            max_point_stdv = data_stdv[max_point_index]
+            print(max_point, max_point_stdv)
 
-        # cooling first order model
-        my_plot.use_same_color()
-        my_plot.set_xy(t_out_c, y_out_c, '--')
-        my_plot.plot_xy()
+            # # heating first order model
+            # my_plot.use_same_color()
+            # my_plot.set_xy(t_out_h, y_out_h, '--')
+            # my_plot.plot_xy()
+
+            # # cooling first order model
+            # my_plot.use_same_color()
+            # my_plot.set_xy(t_out_c, y_out_c, '--')
+            # my_plot.plot_xy()
+
+        my_plot.label_and_save()
 
 
-    my_plot.label_and_save()
+    def get_and_plot_strain():
+        power_input = ["1W", "2W", "3W", "4W"]
 
+        my_plot = MakePlot()
 
-def get_and_plot_strain():
-    power_input = ["1W", "2W", "3W"]
+        for power in power_input:
+            data_path = "encoder_data/"+power+"/"
+            # print(strain_data_names[power])
+            # print(encoder_tca_lengths_10g[power])
 
-    my_plot = MakePlot()
+            raw_strain_data, t, input_data = strain_preprocessing(strain_data_names[power], data_path, encoder_tca_lengths_10g[power])
+            raw_data_avg, raw_data_stdv = find_data_avg(raw_strain_data)
+            
+            filtered_strain_data, filtered_t = filter_data(raw_strain_data, t)
+            filtered_data_avg, filtered_data_stdv = find_data_avg(filtered_strain_data)
 
-    for power in power_input:
-        data_path = "encoder_data/"+power+"/"
-        raw_strain_data, t, input_data = strain_preprocessing(strain_data_names, data_path, encoder_tca_lengths_10g)
-        raw_data_avg, raw_data_stdv = find_data_avg(raw_strain_data)
-        
-        filtered_strain_data, filtered_t = filter_data(raw_strain_data, t)
-        filtered_data_avg, filtered_data_stdv = find_data_avg(filtered_strain_data)
+            pulse_start_index = trim_index
+            pulse_length_index = int(pulse_length / recording_frequency)
+            pulse_stop_index = pulse_start_index+pulse_length_index
 
-        my_plot.set_axis_labels("Time (sec)", "Strain")
-        my_plot.set_data_labels([power])
-        
-        # filtered data average
-        my_plot.set_xy(filtered_t, [filtered_data_avg])
-        my_plot.set_stdev([filtered_data_stdv])
-        my_plot.set_savefig("figs/encoder-figs/encoder-filtered-data.png")
-        my_plot.plot_xy()
+            t_out_h, y_out_h, k_h, tau_h = first_order_fit_2.find_first_order_fit(raw_data_avg, t,
+                                                                            pulse_start_index, pulse_stop_index,
+                                                                            growth=False)
+            
+            t_out_c, y_out_c, k_c, tau_c = first_order_fit_2.find_first_order_fit(raw_data_avg, t,
+                                                                            pulse_stop_index, len(t),
+                                                                            growth=True, ss_tol=0.000001)
 
-        # raw data average
-        # my_plot.set_xy(t, [raw_data_avg])
-        # my_plot.set_stdev([raw_data_stdv])
-        # my_plot.set_savefig("figs/encoder-figs/encoder-raw-data.png")
-        # my_plot.plot_xy()
+            k_h = k_h/int(power[0])
+            k_c = k_c/int(power[0])
 
-        # raw data individuals
-        # fig, ax = plt.subplots(1,1)
-        # for data in raw_strain_data:
-        #     ax.plot(t, data)
-        
-        # plt.show()
+            print(power)
+            print(f"Heating: tau = {round(tau_h,3)}, k = {round(k_h,3)}")
+            print(f"Cooling: tau = {round(tau_c,3)}, k = {round(k_c,3)}")
 
-    my_plot.label_and_save()
+            my_plot.set_axis_labels("Time (sec)", "Strain")
+            my_plot.set_data_labels(power)
+            
+            # filtered data average
+            # my_plot.set_xy(filtered_t, [filtered_data_avg])
+            # my_plot.set_stdev([filtered_data_stdv])
+            # my_plot.set_savefig("figs/encoder-figs/encoder-filtered-data.png")
+            # my_plot.plot_xy()
 
-get_and_plot_force()
+            # np.save("time-vec.npy", t)
+            # np.save("strain-data.npy", raw_data_avg)
 
+            # raw data average
+            my_plot.set_xy(t, raw_data_avg-1)
+            my_plot.set_stdev(raw_data_stdv)
+            my_plot.set_savefig("figs/encoder-figs/strain-data.pdf")
+            my_plot.plot_xy()
+
+            min_point = min(raw_data_avg-1)
+            min_point_index = np.argmin(raw_data_avg)
+            min_point_stdv = raw_data_stdv[min_point_index]
+            print(min_point, min_point_stdv)
+
+            # # heating first order model
+            # my_plot.use_same_color()
+            # my_plot.set_xy(t_out_h, y_out_h-1, '--')
+            # my_plot.plot_xy()
+
+            # check steady state values
+            # my_plot.use_same_color()
+            # my_plot.set_xy(t, [ss]*len(t))
+            # my_plot.plot_xy()
+
+            # # cooling first order model
+            # my_plot.use_same_color()
+            # my_plot.set_xy(t_out_c, y_out_c-1, '--')
+            # my_plot.plot_xy()
+
+            # raw data individuals
+            # fig, ax = plt.subplots(1,1)
+            # for i, data in enumerate(raw_strain_data):
+            #     ax.plot(t, data, label=i)
+            
+            # plt.legend()
+            # plt.show()
+
+        my_plot.label_and_save()
+
+    get_and_plot_force()
+
+    # fig, ax = plt.subplots(1,1)
+    # n = [1, 2, 3, 4, 5, 6]
+    # total_data = []
+    # lengths = [148.3, 148.3, 151.9, 146.0, 154, 135.3]
+    # for i in n:
+    #     data = pd.read_csv("encoder_data/3W/encoder_"+str(i)+"a.csv")
+    #     disp_data = data["Linear displacement (mm)"].to_list()
+    #     input_data = data["Input Signal"].to_list()
+    #     disp, input_sig = trim_data(disp_data, input_data)
+    #     total_data.append(disp)
+    #     # t = create_time_vector(disp)
+    #     # ax.plot(t, disp, label=i)
+
+    # av = np.mean(total_data, axis=0)   
+    # stdv = np.std(total_data, axis=0) 
+
+    # # t = create_time_vector(disp)
+
+    # # ax.plot(t, av)
+    # # ax.fill_between(t, av+stdv, av-stdv, alpha=0.5)
+
+    # plt.legend()
+    # plt.show()
