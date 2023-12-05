@@ -38,8 +38,8 @@ elapsedMillis printTime;
 const int steps_per_rev = 200;
 // const int maxSpeedLimit = 1500.0;  // set this to the maximum speed you want to use.
 
-const int travelerSpeed = 125.0;
-const int mandrelSpeed = 926.7;
+const int travelerSpeed = 125;
+const int mandrelSpeed = 1205;
 
 String direction = "right";
 

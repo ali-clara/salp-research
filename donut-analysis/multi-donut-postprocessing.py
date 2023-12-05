@@ -50,7 +50,7 @@ def graph_values(values, times, avg, avg_time, stdv):
     my_plot.set_stdev(stdv)
     my_plot.set_axis_labels("Time (sec)", "Contour Area (mm^2)")
     my_plot.plot_xy()
-    my_plot.set_savefig("avg_donut_response.pdf")
+    my_plot.set_savefig("avg_donut_response.png")
     my_plot.label_and_save()
 
     
@@ -67,7 +67,7 @@ def graph_values(values, times, avg, avg_time, stdv):
 
     plt.tight_layout()
     plt.savefig("total_donut_response.png")
-    plt.show()
+    # plt.show()
 
 areas, times = load_and_compile("data/8-31-23", num_trials=3)
 average = np.mean(areas, axis=0)
@@ -91,3 +91,30 @@ np.save("data/8-31-23/t_avg.npy", t)
 # area_b = np.load(file_path+"/area_"+str(i+1)+"b.npy")
 # circ_b = np.load(file_path+"/circ_"+str(i+1)+"b.npy")
 # t_b = np.load(file_path+"/t_"+str(i+1)+"b.npy")
+
+first_point = average[0]
+first_stdv = stdv[0]
+
+min_point = min(average)
+min_point_index = np.argmin(average)
+min_point_stdv = stdv[min_point_index]
+
+def error_prop_divsion(avg1, std1, avg2, std2):
+    max = (avg1 + std1) / (avg2 - std2)
+    min = (avg1 - std1) / (avg2 + std2)
+    range = max-min
+    plus_minus = range/2
+
+    return plus_minus
+
+def percent_decrease(val1, std1, val2, std2):
+    delta = val1-val2
+    best = delta/val1
+    std = error_prop_divsion(val1, std1, val2, std2)
+
+    return best, std
+
+dec, std = percent_decrease(first_point, first_stdv, min_point, min_point_stdv)
+print(f"first point {first_point}, std {first_stdv}")
+print(f"minimum area {min_point}, std {min_point_stdv}")
+print(f"percentage change {dec, std}")

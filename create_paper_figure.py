@@ -6,6 +6,9 @@ import numpy as np
 
 csfont = {'fontname':'Comic Sans MS'}
 
+import matplotlib
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype'] = 42
 
 class MakePlot:
     def __init__(self, subplots=None):
@@ -85,19 +88,19 @@ class MakePlot:
         self.ax.spines.right.set_visible(False)
         self.ax.spines.top.set_visible(False)
         
-        self.ax.set_ylabel(self.ylabel, **self.tnrfont, fontsize=14)
-        self.ax.set_xlabel(self.xlabel, **self.tnrfont, fontsize=14)
-        self.ax.set_title(self.title, **self.tnrfont, fontsize=16)
+        self.ax.set_ylabel(self.ylabel, **self.tnrfont, fontsize=20)
+        self.ax.set_xlabel(self.xlabel, **self.tnrfont, fontsize=20)
+        self.ax.set_title(self.title, **self.tnrfont, fontsize=20)
 
         fontname = "Times New Roman"
         labels = self.ax.get_xticklabels() + self.ax.get_yticklabels()
         [label.set_fontname(fontname) for label in labels]
-        [label.set_fontsize(13) for label in labels]
+        [label.set_fontsize(18) for label in labels]
 
         # if self.data_label is not None:
         self.ax.plot(self.x, self.y,
                         self.linestyle, 
-                         markersize=2,
+                         markersize=3,
                          label=self.data_label, 
                          color=self.unused_colors[0])
                         #  linestyle=self.linestyle)
@@ -123,9 +126,13 @@ class MakePlot:
     def label_and_save(self):
         font = font_manager.FontProperties(family='Times New Roman',
                                     weight='normal',
+                                    size='large',
                                     style='normal')
         
-        plt.legend(loc=0, prop=font, fontsize=13)
+        # if self.data_label is not None:
+        #     plt.legend(loc=0, prop=font)
+
+        plt.legend(loc='center right', prop=font)
 
         plt.tight_layout()
         plt.savefig(self.filename)

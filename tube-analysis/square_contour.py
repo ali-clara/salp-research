@@ -4,6 +4,7 @@ import imutils
 import matplotlib.pyplot as plt
 
 hsv_range = np.load("hsv_value.npy")
+# hsv_range = np.load("media/shell/hsv_value.npy")
 
 def crop_image(image):
     # crop: img[y:y+h, x:x+w]
@@ -11,14 +12,17 @@ def crop_image(image):
     height = dimensions[0]
     width = dimensions[1]
 
-    w_start = int(width/3.2)
-    w_stop = int(width/1.38)
+    w_start = int(width/3.3)  # increase to go left
+    w_stop = int(width/1.54)
 
-    h_start = int(height/8)
-    h_stop = int(height/1.25)
+    h_start = int(height/5.3) # increase to go up
+    h_stop = int(height/1.15)
 
     cropped = image[h_start:h_stop, w_start:w_stop]
-    return cropped
+
+    display = image[int(height/5.5):int(height/1.15), int(width/3.7):int(width/1.45)]
+
+    return cropped, display
 
 def edge_image(image):
     blurred = cv2.blur(image, (3, 3))
@@ -76,7 +80,7 @@ def area_from_video(vid_path):
         # do processing if video still has frames left
         if ret:
             # cv2.imshow("raw", frame)
-            frame = crop_image(frame)
+            frame, display_frame = crop_image(frame)
             edges = edge_image(frame)
             cv2.imshow("edge", edges)
 
@@ -97,9 +101,9 @@ def area_from_video(vid_path):
                 area = None
             area_list.append(area)
 
-            cv2.line(frame, left, right, (255,0,0), thickness=1)
-            cv2.drawContours(frame, [merged_contours], -1, (0, 255, 0), 2)
-            cv2.imshow("contours", frame)
+            # cv2.line(frame, left, right, (255,0,0), thickness=1)
+            cv2.drawContours(display_frame, [merged_contours+(60,15)], -1, (0, 255, 0), 4)
+            cv2.imshow("contours", display_frame)
 
             # cleanup if manually ended ("q" key pressed)
             if cv2.waitKey(25) & 0xFF == ord('q'):
@@ -116,48 +120,54 @@ def area_from_video(vid_path):
 def remove_outliers(data):
 
     # cutoff = [40, 40]
-    for _ in range(5):
+    for _ in range(10):
         for i, point in enumerate(data[0:-1]):
             next_point = data[i+1]
             prev_point = data[i-1]
             
             # decreasing portion: if it's an outlier
-            if prev_point - point > 20:
+            if prev_point - point > 4:
                 data[i] = prev_point
 
-            if next_point-point > 8:
+            if next_point - point > 4:
                 data[i] = prev_point
             
 
-        # first point
-    if data[0] - data[1] < 15:
-        data[0] = data[1]
+    # first point
+    if abs(data[0] - data[4]) > 15:
+        data[0] = data[4]
+
+    # last point
+    if abs(data[-1] - data[-2]) > 15:
+        data[-1] = data[-2]
 
     return data
 
 # folder_list = ["all-on", "pulse-hold", "pulse-release"]
 
-
-folder_list = ["pulse-release"]
+body_type = "tube"
+folder_list = ["all-on"]
 video_names = ["1.mp4"]
 save_name = [str(video_names[0][0])]
-video_names = ["1", "2", "3"]
+# video_names = ["1", "2", "3"]
 
 fig, ax = plt.subplots(1,1)
 
 for folder in folder_list:
     for i, video in enumerate(video_names):
-        # path = "media/tube/"+folder+"/"+video
-        # area_list, t = area_from_video(path)
-        # np.save("data/tube/"+folder+"/"+save_name[i]+"-area.npy", np.array(area_list))
-        # np.save("data/tube/"+folder+"/"+save_name[i]+"-t.npy", np.array(t))
+        path = "media/"+body_type+"/"+folder+"/"+video
+        area_list, t = area_from_video(path)
+        # np.save("data/"+body_type+"/"+folder+"/"+save_name[i]+"-area.npy", np.array(area_list))
+        # np.save("data/"+body_type+"/"+folder+"/"+save_name[i]+"-t.npy", np.array(t))
 
-        area_list = np.load("data/shell/"+folder+"/"+video+"-area.npy", allow_pickle=True)
-        t = np.load("data/shell/"+folder+"/"+video+"-t.npy", allow_pickle=True)
+        area_list = np.load("data/"+body_type+"/"+folder+"/"+video+"-area.npy", allow_pickle=True)
+        t = np.load("data/"+body_type+"/"+folder+"/"+video+"-t.npy", allow_pickle=True)
 
         # area_list = remove_outliers(area_list)
         
         ax.plot(t, area_list, '.', label=video)
+
+        # np.save("data/"+body_type+"/"+folder+"/"+video+"-area.npy", area_list)
 
 ax.legend(loc=0)
 plt.show()

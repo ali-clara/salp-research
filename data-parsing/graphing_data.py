@@ -9,12 +9,16 @@ import low_pass_filter
 import first_order_fit
 import first_order_fit_2
 
+import matplotlib
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype'] = 42
+
 
 ## -------------------- Global parameters -------------------- ##
 
 # how much data to save on either side of the pulse
-# trim_index = 55
-trim_index = 85
+trim_index = 55
+# trim_index = 85
 # rate at which data was taken (sec)
 recording_frequency = 0.2
 # length of input singnal pulse (sec)
@@ -47,9 +51,11 @@ def trim_data(data_list, input_signal):
     pulse_start_index = input_signal.index(1)
     # find the first location of a '0' ~after~ the first '1' - pulse turned off
     pulse_stop_index = input_signal.index(0, pulse_start_index)
+
     # trim the force data according to those indices
-    trimmed_data = data_list[pulse_start_index-trim_index:pulse_stop_index+trim_index+1]
-    trimmed_input = input_signal[pulse_start_index-trim_index:pulse_stop_index+trim_index+1]
+    start_trim = int(10/0.2)
+    trimmed_data = data_list[pulse_start_index-start_trim:pulse_stop_index+trim_index+1]
+    trimmed_input = input_signal[pulse_start_index-start_trim:pulse_stop_index+trim_index+1]
 
     return trimmed_data, trimmed_input
 
@@ -219,18 +225,23 @@ if __name__ == "__main__":
             my_plot.set_stdev(data_stdv)
             my_plot.set_axis_labels("Time (sec)", "Force (mN)")
             my_plot.set_data_labels(power)
-            my_plot.set_savefig("figs/force-figs/force-first-order-model.pdf")
+            my_plot.set_savefig("figs/force-figs/force.pdf")
             my_plot.plot_xy()
 
-            # heating first order model
-            my_plot.use_same_color()
-            my_plot.set_xy(t_out_h, y_out_h, '--')
-            my_plot.plot_xy()
+            max_point = max(data_avg)
+            max_point_index = np.argmax(data_avg)
+            max_point_stdv = data_stdv[max_point_index]
+            print(max_point, max_point_stdv)
 
-            # cooling first order model
-            my_plot.use_same_color()
-            my_plot.set_xy(t_out_c, y_out_c, '--')
-            my_plot.plot_xy()
+            # # heating first order model
+            # my_plot.use_same_color()
+            # my_plot.set_xy(t_out_h, y_out_h, '--')
+            # my_plot.plot_xy()
+
+            # # cooling first order model
+            # my_plot.use_same_color()
+            # my_plot.set_xy(t_out_c, y_out_c, '--')
+            # my_plot.plot_xy()
 
         my_plot.label_and_save()
 
@@ -242,8 +253,8 @@ if __name__ == "__main__":
 
         for power in power_input:
             data_path = "encoder_data/"+power+"/"
-            print(strain_data_names[power])
-            print(encoder_tca_lengths_10g[power])
+            # print(strain_data_names[power])
+            # print(encoder_tca_lengths_10g[power])
 
             raw_strain_data, t, input_data = strain_preprocessing(strain_data_names[power], data_path, encoder_tca_lengths_10g[power])
             raw_data_avg, raw_data_stdv = find_data_avg(raw_strain_data)
@@ -285,23 +296,28 @@ if __name__ == "__main__":
             # raw data average
             my_plot.set_xy(t, raw_data_avg-1)
             my_plot.set_stdev(raw_data_stdv)
-            my_plot.set_savefig("figs/encoder-figs/encoder-raw-data-model.png")
+            my_plot.set_savefig("figs/encoder-figs/strain-data.pdf")
             my_plot.plot_xy()
 
-            # heating first order model
-            my_plot.use_same_color()
-            my_plot.set_xy(t_out_h, y_out_h-1, '--')
-            my_plot.plot_xy()
+            min_point = min(raw_data_avg-1)
+            min_point_index = np.argmin(raw_data_avg)
+            min_point_stdv = raw_data_stdv[min_point_index]
+            print(min_point, min_point_stdv)
+
+            # # heating first order model
+            # my_plot.use_same_color()
+            # my_plot.set_xy(t_out_h, y_out_h-1, '--')
+            # my_plot.plot_xy()
 
             # check steady state values
             # my_plot.use_same_color()
             # my_plot.set_xy(t, [ss]*len(t))
             # my_plot.plot_xy()
 
-            # cooling first order model
-            my_plot.use_same_color()
-            my_plot.set_xy(t_out_c, y_out_c-1, '--')
-            my_plot.plot_xy()
+            # # cooling first order model
+            # my_plot.use_same_color()
+            # my_plot.set_xy(t_out_c, y_out_c-1, '--')
+            # my_plot.plot_xy()
 
             # raw data individuals
             # fig, ax = plt.subplots(1,1)
@@ -313,7 +329,7 @@ if __name__ == "__main__":
 
         my_plot.label_and_save()
 
-    get_and_plot_strain()
+    get_and_plot_force()
 
     # fig, ax = plt.subplots(1,1)
     # n = [1, 2, 3, 4, 5, 6]
