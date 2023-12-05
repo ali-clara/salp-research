@@ -9,7 +9,7 @@ import keyboard
 # setup
 start_time = time.time()
 # Arduino serial port
-arduino_port = "COM7"
+arduino_port = "COM3"
 # Arduino baud rate (make sure it matches)
 baud = 9600
 # serial connection
@@ -32,7 +32,8 @@ print("Exiting data collection")
 
 # save data to csv
 # filename = "force_data/2W/load-cell-data_"+str(start_time)+".csv"
-filename = "encoder_data/4W/encoder-data_"+str(start_time)+".csv"
+# filename = "encoder_data/4W/encoder-data_"+str(start_time)+".csv"
+filename = "main-TCA-batch-2/force/2W.csv"
 
 with open (filename, 'w', encoding='UTF8', newline='') as f:
     write = csv.writer(f)
