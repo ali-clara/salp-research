@@ -188,12 +188,20 @@ if __name__ == "__main__":
     # 4W full - [147.8, 149.5, 143.8, 134, 134, 135, 135]
 
     assert len(strain_data_names) == len(encoder_tca_lengths_10g), "strain data and TCA lengths should match"
+    assert len(strain_data_names) == len(encoder_tca_lengths_10g), "strain data and TCA lengths should match"
 
+    def get_and_plot_force():
+        power_input = ["1W", "2W", "3W", "4W"]
     def get_and_plot_force():
         power_input = ["1W", "2W", "3W", "4W"]
 
         my_plot = MakePlot()
+        my_plot = MakePlot()
 
+        for power in power_input:
+            data_path = "force_data/"+power+"/"
+            raw_force_data, t, input_data = force_preprocessing(force_data_names, data_path)
+            data_avg, data_stdv = find_data_avg(raw_force_data)
         for power in power_input:
             data_path = "force_data/"+power+"/"
             raw_force_data, t, input_data = force_preprocessing(force_data_names, data_path)
@@ -220,6 +228,9 @@ if __name__ == "__main__":
             print(power)
             print(f"Heating: tau = {round(tau_h,3)}, k = {round(k_h,3)}")
             print(f"Cooling: tau = {round(tau_c,3)}, k = {round(k_c,3)}")
+            print(power)
+            print(f"Heating: tau = {round(tau_h,3)}, k = {round(k_h,3)}")
+            print(f"Cooling: tau = {round(tau_c,3)}, k = {round(k_c,3)}")
 
             my_plot.set_xy(t, data_avg)
             my_plot.set_stdev(data_stdv)
@@ -228,27 +239,25 @@ if __name__ == "__main__":
             my_plot.set_savefig("figs/force-figs/force.pdf")
             my_plot.plot_xy()
 
-            max_point = max(data_avg)
-            max_point_index = np.argmax(data_avg)
-            max_point_stdv = data_stdv[max_point_index]
-            print(max_point, max_point_stdv)
+            # heating first order model
+            my_plot.use_same_color()
+            my_plot.set_xy(t_out_h, y_out_h, '--')
+            my_plot.plot_xy()
 
-            # # heating first order model
-            # my_plot.use_same_color()
-            # my_plot.set_xy(t_out_h, y_out_h, '--')
-            # my_plot.plot_xy()
+            # cooling first order model
+            my_plot.use_same_color()
+            my_plot.set_xy(t_out_c, y_out_c, '--')
+            my_plot.plot_xy()
 
-            # # cooling first order model
-            # my_plot.use_same_color()
-            # my_plot.set_xy(t_out_c, y_out_c, '--')
-            # my_plot.plot_xy()
 
+        my_plot.label_and_save()
         my_plot.label_and_save()
 
 
     def get_and_plot_strain():
         power_input = ["1W", "2W", "3W", "4W"]
 
+        my_plot = MakePlot()
         my_plot = MakePlot()
 
         for power in power_input:
@@ -328,7 +337,9 @@ if __name__ == "__main__":
             # plt.show()
 
         my_plot.label_and_save()
+        my_plot.label_and_save()
 
+    get_and_plot_force()
     get_and_plot_force()
 
     # fig, ax = plt.subplots(1,1)

@@ -9,7 +9,7 @@ import keyboard
 # setup
 start_time = time.time()
 # Arduino serial port
-arduino_port = "COM7"
+arduino_port = "COM3"
 # Arduino baud rate (make sure it matches)
 baud = 9600
 # serial connection
