@@ -9,7 +9,7 @@ import keyboard
 # setup
 start_time = time.time()
 # Arduino serial port
-arduino_port = "COM3"
+arduino_port = "COM6"
 # Arduino baud rate (make sure it matches)
 baud = 9600
 # serial connection
@@ -33,11 +33,11 @@ print("Exiting data collection")
 # save data to csv
 
 ############# CHANGE THESE PARAMS #############
-sensor = "encoder"
-watts = "4"
+sensor = "strain"
+watts = "3"
 
 try:
-    filename = sensor+"_data/"+watts+"W/"+sensor+"-data_"+str(start_time)+".csv"    
+    filename = "26AWG/"+sensor+"/"+watts+"W/"+sensor+"-data_"+str(start_time)+".csv"    
     with open (filename, 'w', encoding='UTF8', newline='') as f:
         write = csv.writer(f)
         write.writerows(sensor_data)

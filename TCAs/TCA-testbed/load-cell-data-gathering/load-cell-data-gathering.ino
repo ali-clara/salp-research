@@ -32,7 +32,7 @@
 HX711 scale;
 
 // definitions
-#define calibration_factor 13400 //This value is obtained using the SparkFun_HX711_Calibration sketch
+#define calibration_factor 13830 //This value is obtained using the SparkFun_HX711_Calibration sketch
 #define DOUT  10
 #define CLK  9
 
@@ -46,11 +46,14 @@ long time_interval_signal = 30 * 1000;  // pulse frequency (ms)
 long time_interval_load = 0.2 * 1000; // data collection frequency (ms)
 unsigned long previous_time_signal = millis();
 unsigned long previous_time_load = millis();
+unsigned long current_time;
+
+int temp;
 
 void setup() {
   // set up signal pin
-  digitalWrite(signal_pin, LOW);
   pinMode(signal_pin, OUTPUT);
+  digitalWrite(signal_pin, LOW);
   signal_data = 0;
 
   // set up load cell
@@ -71,19 +74,29 @@ void setup() {
 
 void loop() {
 
-  unsigned long current_time = millis();
+  current_time = millis();
 
-  // change signal data every square wave interval (currently 10 sec)
+  // change signal data every square wave interval (currently 30 sec)
   if (current_time - previous_time_signal > time_interval_signal){
     // update the previous time increment
     previous_time_signal = current_time;
+    // Serial.println("15 seconds");
+    // Serial.println(digitalRead(signal_pin));
 
-    if (digitalRead(signal_pin) == HIGH){
-      digitalWrite(signal_pin, LOW);
+    temp = digitalRead(signal_pin);
+    // Serial.println(temp);
+
+    // if pin is on
+    if(temp == 1){
+      // Serial.println("writing to 0");
+      digitalWrite(signal_pin, 0);
+      // Serial.println(digitalRead(signal_pin));
       signal_data = 0;
     }
     else{
-      digitalWrite(signal_pin, HIGH);
+      // Serial.println("writing to 1");
+      digitalWrite(signal_pin, 1);
+      // Serial.println(digitalRead(signal_pin));
       signal_data = 1;
     }
   }
@@ -97,6 +110,10 @@ void loop() {
     Serial.print(force_data, 4);
     Serial.print(",");
     Serial.println(signal_data);
+    // Serial.print(",");
+    // Serial.print(current_time);
+    // Serial.print(",");
+    // Serial.println(previous_time_signal);
   }
 
 }

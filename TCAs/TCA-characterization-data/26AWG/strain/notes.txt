@@ -1,0 +1,9 @@
+TCA 1: resting length 50.78mm, resistance 4.5
+TCA 2: resting length 55.36mm, resistance 4.2
+
+
+Power supply settings:
+1W - 2.05V
+2W - 2.90V
+3W - 3.55V
+4W - 4.15V

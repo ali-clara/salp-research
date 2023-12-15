@@ -11,15 +11,16 @@
 Encoder enc(2, 3);
 long positionEnc  = -999;
 
-int signal_pin = 6;
+int signal_pin = 12;
 
 float disp_data;
 int signal_data;
 
-long time_interval_signal = 30 * 1000;  // pulse frequency (ms)
+long time_interval_signal = 15 * 1000;  // pulse frequency (ms)
 long time_interval_enc = 0.2 * 1000; // data collection frequency (ms)
 unsigned long previous_time_signal = millis();
 unsigned long previous_time_enc = millis();
+int temp;
 
 void setup() {
   // set up signal pin
@@ -37,7 +38,8 @@ void setup() {
   Serial.begin(9600);
   Serial.print("Linear displacement (mm)");
   Serial.print(",");
-  Serial.println("Input Signal");
+  Serial.println("Time (s)");
+  // Serial.println("Input Signal");
 }
 
 void loop() {
@@ -52,12 +54,14 @@ void loop() {
     // update the previous time increment
     previous_time_signal = current_time;
 
-    if (digitalRead(signal_pin) == HIGH){
-      digitalWrite(signal_pin, LOW);
+    temp = digitalRead(signal_pin);
+
+    if (temp == 1){
+      digitalWrite(signal_pin, 0);
       signal_data = 0;
     }
     else{
-      digitalWrite(signal_pin, HIGH);
+      digitalWrite(signal_pin, 1);
       signal_data = 1;
     }
   }
@@ -73,9 +77,9 @@ void loop() {
   
     Serial.print(dist, 4);
     Serial.print(",");
-    Serial.println(signal_data);
+    Serial.println(current_time/1000.0);
+    // Serial.println(signal_data);
   }
-
 }
 
 float pulse_to_rev(long pulse){
