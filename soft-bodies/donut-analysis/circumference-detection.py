@@ -1,7 +1,8 @@
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-
+import glob 
+plt.style.use("seaborn-deep")
 ## calibrate with a contour of known size and the procedure here: 
 # https://pyimagesearch.com/2015/01/19/find-distance-camera-objectmarker-using-python-opencv/
 
@@ -9,12 +10,14 @@ import matplotlib.pyplot as plt
 # HSV mask values
 
 # 1
-blue_min = np.array([55, 30, 40],np.uint8)
-blue_max = np.array([170, 255, 165],np.uint8)
+# blue_min = np.array([55, 30, 40],np.uint8)
+# blue_max = np.array([170, 255, 165],np.uint8)
 
 # 3b
 # blue_min = np.array([55, 30, 40],np.uint8)
 # blue_max = np.array([170, 255, 155],np.uint8)
+
+hsv_range = np.load("media/12-15-23/hsv_value.npy")
 
 ## ----------------- Image Pre-Processing ----------------- ##
 
@@ -23,7 +26,7 @@ def crop_image(img):
     height = dimensions[0]
     width = dimensions[1]
 
-    w_margin = int(width/3.5)
+    w_margin = int(width/2.75)
     h_margin = int(height/3)
 
     # crop: img[y:y+h, x:x+w]
@@ -46,7 +49,7 @@ def mask_image(image, color, display=False):
     if color != "black":
         blurred = cv2.blur(image, (10, 10))
         hsv_img = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
-        masked_img = cv2.inRange(hsv_img, blue_min, blue_max)
+        masked_img = cv2.inRange(hsv_img, hsv_range[0], hsv_range[1])
     elif color == "black":
         grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         blurred = cv2.blur(grey, (10, 10))
@@ -101,7 +104,7 @@ def detect_contours(raw_image, edge_image, cal_value, display=False):
         approx = cv2.approxPolyDP(contour,0.01*cv2.arcLength(contour,True),True)
         area = cv2.contourArea(contour)
         perimeter = cv2.arcLength(contour, True)
-        if ((len(approx) > 8) & (area > 10000) & (perimeter > 400) & (perimeter < 800)):
+        if ((len(approx) > 8) & (area > 10000) & (perimeter > 300) & (perimeter < 600)):
         # if ((len(approx) > 8) & 
         #     (area > area_of_circle(mm_to_pixel(r, pix_per_mm=cal_value))) & 
         #     (perimeter > mm_to_pixel((c-70), pix_per_mm=cal_value)) & 
@@ -211,7 +214,7 @@ def video_capture(path_to_video, cal_value, color):
             # grab timestamp
             timestamp = cap.get(cv2.CAP_PROP_POS_MSEC)
             t.append(timestamp / 1000.0)
-            print(timestamp/1000)
+            # print(timestamp/1000)
             
             cv2.imshow('Objects Detected', frame)
 
@@ -230,12 +233,8 @@ def video_capture(path_to_video, cal_value, color):
 ##  ----------------- Flight Code ----------------- ##
 
 if __name__ == "__main__":
-    img_path = "media/donut-screenshot.png"
-    vid_1 = "media/donut-video.mp4"
-    vid_2 = "media/donut-5W.mp4"
-    # cal_path = "media/8-1-23/calibration.mp4"
 
-    def calibrate(cal_path):
+    def calibrate(cal_path, save_path):
         calibration_perim = calibration(cal_path)
         average_perim = np.mean(calibration_perim)
         true_perim = 81.33 # mm, measured perimeter of square
@@ -244,8 +243,7 @@ if __name__ == "__main__":
 
         print(f"The average calibration square perimeter was {average_perim} px")
         print(f"Calibration value: {pix_per_mm} pix/mm")
-
-        return pix_per_mm
+        np.save(save_path+"/pix_per_mm.npy", np.round(pix_per_mm,4))
     
     def do_video(vid_path, pix_per_mm, file_date, file_name, donut_color="blue"):
         circumference_list, area_list, t = video_capture(vid_path, pix_per_mm, donut_color)
@@ -258,42 +256,41 @@ if __name__ == "__main__":
             np.save('circ_'+file_name+'.npy', np.array(circumference_list))
             np.save('area_'+file_name+'.npy', np.array(area_list))
             np.save('t_'+file_name+'.npy', np.array(t))
- 
-    def do_photo():
-        raw_image = read_and_crop(img_path, display=True)
-        # mask = mask_image(raw_image)
-        # edge_image = detect_edges(mask)
-        # contour_list = detect_contours(raw_image, edge_image)
-        # perimeter = cv2.arcLength(contour_list[0], True)
-    
-    # calibration_value = calibrate("media/8-31-23/calibration-1.mp4") # number of pixels per mm of image
 
-    # do_video(vid_2, 7.31)
-    # do_video("media/8-16-23/5W.mp4", pix_per_mm=8.06, file_date="8-16-23", file_name="5W")
+        
+    do_calibration = False
+    do_videos = False
+    
+    # run from donut-analysis folder
+        # names = ["3W-1", "3W-2", "3W-3", "4W"]
+    date = "12-15-23"
+    path = "media\\"+date+"\\"
+    calibration_video = path+"/calibration/calibration.mp4"
+
+    if do_calibration:
+        calibrate(calibration_video, path+"/calibration")
+    
+    if do_videos:
+        for file_name in glob.glob(path+"*.mp4"):
+            video_name = file_name.split("\\")[-1]
+            save_name = video_name.split(".")[0]
+            # print(video_name, save_name)
+            calibration_value = np.load(path+"/calibration/pix_per_mm.npy")
+            do_video(vid_path=file_name, pix_per_mm=calibration_value, file_date=date, file_name=save_name)
+            print(f"finished video {video_name}")
 
     
-    # names = ["1a", "1b", "2a", "2b", "3a", "3b"]
-    names = ["2a"]
+    fig, ax = plt.subplots(1,1)
+    plots_path = "data\\"+date+"\\"
+    names = ["3W-1", "3W-2", "3W-3", "4W"]
     for name in names:
-        do_video("media/8-31-23/donut-"+name+".mp4", pix_per_mm=8.57, file_date="8-31-23", file_name=name)
-
-
-    # a1 = np.load("data/8-31-23/area_1a.npy")
-    # t1 = np.load("data/8-31-23/t_1a.npy")
-    # a1b = np.load("data/8-31-23/area_1b.npy")
-    # t1b = np.load("data/8-31-23/t_1b.npy")
-    # a2 = np.load("data/8-31-23/area_2a.npy")
-    # t2 = np.load("data/8-31-23/t_2a.npy")
-
-    # print(len(a2))
-    # print(t2[3500])
-
-    # print(len(a1))
-    # print(t1[3500])
-
-    # fig, ax = plt.subplots(1,1)
-    # ax.plot(t1, a1)
-    # ax.plot(t1b, a1b)
-    # ax.plot(t2, a2)
-    # plt.show()
-
+        area = np.load(plots_path+"area_"+name+".npy")
+        t = np.load(plots_path+"t_"+name+".npy")
+        ax.plot(t, area, '.', markersize=5, label=name)
+    
+    ax.set_ylabel("Contour Area (mm^2)")
+    ax.set_xlabel("Time")
+    ax.legend()
+    # plt.savefig("26AWG-donut-response.png")
+    plt.show()
+    

@@ -1,0 +1,11 @@
+batch 2 of 26AWG, trimmed to same resistance/length as in the strain measurements
+prestrained to 5g
+
+TCA1: resistance 4.5, used in first two trials of each power measurement. Got pretty scrungly after the first 3W trial
+
+
+Power supply settings:
+1W - 2.05V
+2W - 2.90V
+3W - 3.55V
+4W - 4.15V

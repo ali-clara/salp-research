@@ -6,7 +6,6 @@ import sys
 sys.path.append("C:\\Users\\alicl\\Documents\\GitHub\\salp-research")
 from create_paper_figure import MakePlot
 import low_pass_filter
-import first_order_fit
 import first_order_fit_2
 
 import matplotlib
@@ -18,7 +17,7 @@ matplotlib.rcParams['ps.fonttype'] = 42
 
 # how much data to save on either side of the pulse
 trim_index = 55
-# trim_index = 85
+trim_index = 85
 # rate at which data was taken (sec)
 recording_frequency = 0.2
 # length of input singnal pulse (sec)
@@ -37,7 +36,7 @@ def disp_to_strain(data, lg):
     """Args
         data - list of displacement values (mm)"""
     
-    strain = (lg - np.array(data)) / lg
+    strain = (np.array(data)) / lg
     return strain
 
 def trim_data(data_list, input_signal):
@@ -167,12 +166,6 @@ if __name__ == "__main__":
     force_data_names = ["load-cell-data_1.csv", 
                         "load-cell-data_2.csv", 
                         "load-cell-data_3.csv"]
-
-    # strain_data_names = ["encoder-data_1.csv",
-    #                     "encoder-data_1-1.csv",
-    #                     "encoder-data_2.csv",
-    #                     "encoder-data_4.csv",
-    #                     "encoder-data_5.csv"]
     
     strain_data_names = {"1W": ["encoder_1.csv","encoder_1-1.csv","encoder_2.csv","encoder_3.csv","encoder_4.csv"],
                          "2W": ["encoder_1-1.csv","encoder_2.csv","encoder_4.csv"],
@@ -247,7 +240,7 @@ if __name__ == "__main__":
         my_plot = MakePlot()
 
         for power in power_input:
-            data_path = "main-TCA-batch-1/encoder_data/"+power+"/"
+            data_path = "0.8mm/encoder_data/"+power+"/"
 
             raw_strain_data, t, input_data = strain_preprocessing(strain_data_names[power], data_path, encoder_tca_lengths_10g[power])
             raw_data_avg, raw_data_stdv = find_data_avg(raw_strain_data)
@@ -287,9 +280,9 @@ if __name__ == "__main__":
             # np.save("strain-data.npy", raw_data_avg)
 
             # raw data average
-            my_plot.set_xy(t, raw_data_avg-1)
+            my_plot.set_xy(t, raw_data_avg)
             my_plot.set_stdev(raw_data_stdv)
-            my_plot.set_savefig("main-TCA-batch-1/figs/encoder-figs/strain-test.pdf")
+            my_plot.set_savefig("strain-test-new.pdf")
             my_plot.plot_xy()
 
             min_point = min(raw_data_avg-1)

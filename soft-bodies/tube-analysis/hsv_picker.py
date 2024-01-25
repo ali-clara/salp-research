@@ -7,7 +7,7 @@ def nothing(x):
     pass
 
 # Initializing the webcam feed.
-vid_path = "media/tube/pulse-hold/1.mp4"
+vid_path = "donut-analysis/media/12-15-23/3W-1.mp4"
 cap = cv2.VideoCapture(vid_path)
 # cap.set(3,1280)
 # cap.set(4,720)

@@ -53,7 +53,6 @@ def graph_values(values, times, avg, avg_time, stdv):
     my_plot.set_savefig("avg_donut_response.png")
     my_plot.label_and_save()
 
-    
     ax[1].plot(avg_time, avg)
     ax[1].fill_between(avg_time, avg+stdv, avg-stdv, alpha=0.5)
     ax[1].set_ylabel("Contour Area (mm^2)")

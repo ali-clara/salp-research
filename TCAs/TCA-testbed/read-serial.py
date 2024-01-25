@@ -33,8 +33,9 @@ print("Exiting data collection")
 # save data to csv
 
 ############# CHANGE THESE PARAMS #############
-sensor = "strain"
+sensor = "force"
 watts = "3"
+###############################################
 
 try:
     filename = "26AWG/"+sensor+"/"+watts+"W/"+sensor+"-data_"+str(start_time)+".csv"    

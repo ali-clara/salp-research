@@ -96,7 +96,8 @@ float rev_to_dist(float rev){
   float dist;
 
   theta_enc = rev*2*M_PI; // the angle in radians the encoder has travelled
-  r_pulley = 11.6/2;  // the radius of the pulley (mm)
+  // r_pulley = 11.6/2;  // the radius of the pulley (mm)
+  r_pulley = 11.0/2; // radius of the pulley (mm)
 
   dist = theta_enc*r_pulley;  // linear distance traveled by TCA
   return dist;

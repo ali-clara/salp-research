@@ -69,7 +69,8 @@ void setup() {
   // Serial.println("HX711 scale demo");
   Serial.print("Force (g)");
   Serial.print(",");
-  Serial.println("Input Signal");
+  // Serial.println("Input Signal");
+  Serial.println("Time (s)");
 }
 
 void loop() {
@@ -109,7 +110,8 @@ void loop() {
     force_data = scale.get_units();  // float
     Serial.print(force_data, 4);
     Serial.print(",");
-    Serial.println(signal_data);
+    // Serial.println(signal_data);
+    Serial.println(current_time/1000.0);
     // Serial.print(",");
     // Serial.print(current_time);
     // Serial.print(",");
