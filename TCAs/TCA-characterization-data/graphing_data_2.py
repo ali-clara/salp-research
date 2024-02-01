@@ -74,7 +74,7 @@ if __name__ == "__main__":
     disp_folder_path = "26AWG\\strain"
     force_folder_path = "26AWG\\force"
 
-    plot_strain = False
+    plot_strain = True
     plot_force = False
     
     if plot_strain:
