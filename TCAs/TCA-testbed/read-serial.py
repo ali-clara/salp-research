@@ -11,7 +11,7 @@ start_time = time.time()
 # Arduino serial port
 arduino_port = "COM6"
 # Arduino baud rate (make sure it matches)
-baud = 9600
+baud = 115200
 # serial connection
 ser = serial.Serial(arduino_port, baud)
 print(f"Connected to Arduino port {arduino_port}")
@@ -34,11 +34,11 @@ print("Exiting data collection")
 
 ############# CHANGE THESE PARAMS #############
 sensor = "force"
-watts = "3"
+watts = "4"
 ###############################################
 
 try:
-    filename = "26AWG/"+sensor+"/"+watts+"W/"+sensor+"-data_"+str(start_time)+".csv"    
+    filename = "cold/"+sensor+"/"+watts+"W/"+sensor+"-data_"+str(start_time)+".csv"    
     with open (filename, 'w', encoding='UTF8', newline='') as f:
         write = csv.writer(f)
         write.writerows(sensor_data)

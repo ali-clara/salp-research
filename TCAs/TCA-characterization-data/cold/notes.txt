@@ -1,0 +1,3 @@
+First recording: 5ohm tca
+
+2W: 3.16V

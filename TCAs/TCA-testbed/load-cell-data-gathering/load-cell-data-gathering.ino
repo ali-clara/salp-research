@@ -26,78 +26,78 @@
 
 */
 
-// imports
-#include "HX711.h"
+// Import all the things
+#include "HX711.h"  // load cell
+#include <Adafruit_MAX31856.h>  // thermocouple
 
 HX711 scale;
+Adafruit_MAX31856 maxthermo = Adafruit_MAX31856(10, 11, 12, 13);
 
 // definitions
 #define calibration_factor 13830 //This value is obtained using the SparkFun_HX711_Calibration sketch
-#define DOUT  10
-#define CLK  9
+#define DAT  6
+#define CLK  5
 
 // globals
 int signal_pin = 12;
-
-float force_data;
 int signal_data;
-
 long time_interval_signal = 30 * 1000;  // pulse frequency (ms)
 long time_interval_load = 0.2 * 1000; // data collection frequency (ms)
 unsigned long previous_time_signal = millis();
 unsigned long previous_time_load = millis();
 unsigned long current_time;
 
-int temp;
-
 void setup() {
-  // set up signal pin
+  // Set up signal pin
   pinMode(signal_pin, OUTPUT);
   digitalWrite(signal_pin, LOW);
   signal_data = 0;
 
-  // set up load cell
-  scale.begin(DOUT, CLK);
-  scale.set_scale(calibration_factor); //This value is obtained by using the SparkFun_HX711_Calibration sketch
-  scale.tare(); //Assuming there is no weight on the scale at start up, reset the scale to 0
+  // Set up serial monitor
+  Serial.begin(115200);
+  while (!Serial) delay(10);
 
-  // delay long enough to let me clear the serial monitor and start the python script
+  // Set up load cell
+  scale.begin(DAT, CLK);
+  scale.set_scale(calibration_factor); // This value is obtained by using the SparkFun_HX711_Calibration sketch
+  scale.tare(); // Assuming there is no weight on the scale at start up, reset the scale to 0
+
+  // Set up thermocouple
+  if (!maxthermo.begin()) {
+    Serial.println("Could not initialize thermocouple.");
+  }
+  maxthermo.setThermocoupleType(MAX31856_TCTYPE_K);
+  maxthermo.setConversionMode(MAX31856_CONTINUOUS);
+
+  // 5 second delay to let me clear the serial monitor and start any data grabbing scripts 
   delay(5000);
 
-  // set up serial communication and print column headers
-  Serial.begin(9600);
-  // Serial.println("HX711 scale demo");
+  // Print column headers
+  Serial.print("Time (s)");
+  Serial.print(",");
   Serial.print("Force (g)");
   Serial.print(",");
-  // Serial.println("Input Signal");
-  Serial.println("Time (s)");
+  Serial.println("Ambient temperature (c)");
 }
 
 void loop() {
 
   current_time = millis();
 
-  // change signal data every square wave interval (currently 30 sec)
+  // 2-11, not currently using
+  // change signal data every square wave interval
   if (current_time - previous_time_signal > time_interval_signal){
     // update the previous time increment
     previous_time_signal = current_time;
-    // Serial.println("15 seconds");
-    // Serial.println(digitalRead(signal_pin));
 
-    temp = digitalRead(signal_pin);
-    // Serial.println(temp);
-
-    // if pin is on
-    if(temp == 1){
-      // Serial.println("writing to 0");
+    // if pin is on, turn it off
+    if(digitalRead(signal_pin) == 1){
       digitalWrite(signal_pin, 0);
-      // Serial.println(digitalRead(signal_pin));
       signal_data = 0;
     }
+    // otherwise, turn it on
     else{
-      // Serial.println("writing to 1");
       digitalWrite(signal_pin, 1);
-      // Serial.println(digitalRead(signal_pin));
       signal_data = 1;
     }
   }
@@ -106,12 +106,13 @@ void loop() {
   if (current_time - previous_time_load > time_interval_load){
     // update the previous time increment
     previous_time_load = current_time;
-    
-    force_data = scale.get_units();  // float
-    Serial.print(force_data, 4);
+
+    Serial.print(current_time/1000.0);
     Serial.print(",");
-    // Serial.println(signal_data);
-    Serial.println(current_time/1000.0);
+    Serial.print(scale.get_units(), 4);
+    Serial.print(",");
+    Serial.println(maxthermo.readThermocoupleTemperature(), 4);
+    
     // Serial.print(",");
     // Serial.print(current_time);
     // Serial.print(",");
