@@ -9,7 +9,7 @@ import keyboard
 # setup
 start_time = time.time()
 # Arduino serial port
-arduino_port = "COM6"
+arduino_port = "/dev/ttyACM0"
 # Arduino baud rate (make sure it matches)
 baud = 115200
 # serial connection
@@ -34,7 +34,7 @@ print("Exiting data collection")
 
 ############# CHANGE THESE PARAMS #############
 sensor = "force"
-watts = "4"
+watts = "6"
 ###############################################
 
 try:
