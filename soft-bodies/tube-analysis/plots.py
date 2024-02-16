@@ -37,7 +37,7 @@ def plot(my_plot, t, area_avg, area_std, data_label):
     my_plot.set_xy(t, area_avg, '.')
     my_plot.set_stdev(area_std)
     my_plot.set_data_labels(data_label)
-    my_plot.set_axis_labels(xlabel="Time (sec)", ylabel="Area (mm^2)")
+    my_plot.set_axis_labels(xlabel="Time (sec)", ylabel="Area (mm$^2$)")
     my_plot.plot_xy()
     
 def shell():
@@ -94,7 +94,7 @@ def shell():
 
     plot(shell_plot, t_list[0], area_avg, area_std, "Activated and released")
 
-    shell_plot.set_savefig("shell-3-responses.png")
+    shell_plot.set_savefig("shell-3-responses.pdf")
     shell_plot.label_and_save()
 
     np.save("data/averages/shell_pulse-release_avg.npy", area_avg)
@@ -158,10 +158,10 @@ def tube():
 
     plot(tube_plot, t_list[0], area_avg, area_std, "Activated and released")
 
-    tube_plot.set_savefig("tube-3-responses2.pdf")
+    tube_plot.set_savefig("tube-3-responses2.png")
     tube_plot.label_and_save()
 
     np.save("data/averages/tube_pulse-release_avg.npy", area_avg)
     np.save("data/averages/tube_pulse-release_t.npy", t_list[0])
 
-shell()
+tube()

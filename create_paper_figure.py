@@ -12,7 +12,7 @@ matplotlib.rcParams['ps.fonttype'] = 42
 
 class MakePlot:
     def __init__(self, subplots=None):
-        fig, ax = plt.subplots(1,1, figsize=(9,5))
+        fig, ax = plt.subplots(1,1, figsize=(9,4))
         self.ax = ax
 
         if subplots is not None:
@@ -132,7 +132,7 @@ class MakePlot:
         # if self.data_label is not None:
         #     plt.legend(loc=0, prop=font)
 
-        plt.legend(loc='center right', prop=font)
+        plt.legend(loc="center right", prop=font)
 
         plt.tight_layout()
         plt.savefig(self.filename)

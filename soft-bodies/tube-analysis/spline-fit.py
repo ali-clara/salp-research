@@ -132,7 +132,7 @@ def shell_volume(front_area, t, dia_interp_list, t_interp_list, pulse_type, plot
 
     return vol_dot, a0
 
-# my_plot = MakePlot()
+my_plot = MakePlot()
 path_names = ["all-on", "pulse-hold", "pulse-release"]
 body_type = "tube"
 
@@ -145,8 +145,8 @@ for i, name in enumerate(path_names):
     front_area = np.load("data/averages/"+body_type+"_"+name+"_avg.npy") #mm2
     t = np.load("data/averages/"+body_type+"_"+name+"_t.npy")
     
-    # vol_dot, a0 = shell_volume(front_area, t, dia_interp_list[i], t_interp_list[i], pulse_type=body_type+"_"+name, plot=True) #mm3/s, mm2
-    vol_dot, a0 = tube_volume(front_area, t, pulse_type=body_type+"_"+name, plot=True) #mm3/s, mm2
+    # vol_dot, a0 = shell_volume(front_area, t, dia_interp_list[i], t_interp_list[i], pulse_type=body_type+"_"+name, plot=False) #mm3/s, mm2
+    vol_dot, a0 = tube_volume(front_area, t, pulse_type=body_type+"_"+name, plot=False) #mm3/s, mm2
      
     vol_dot_m3 = mm3_to_m3(vol_dot)
     a0_m2 = mm2_to_m2(a0)
@@ -154,11 +154,11 @@ for i, name in enumerate(path_names):
     thrust_mn = n_to_mn(thrust)
     print(max(thrust_mn))
 
-#     my_plot.set_xy(t, thrust_mn*1e3)
-#     my_plot.set_data_labels(legend_names[i])
+    my_plot.set_xy(t, thrust_mn*1e3)
+    my_plot.set_data_labels(legend_names[i])
    
-#     my_plot.set_axis_labels(xlabel="Time (sec)", ylabel="Thrust (mN x 1e-3)")
-#     my_plot.plot_xy()
+    my_plot.set_axis_labels(xlabel="Time (sec)", ylabel="Thrust (mN x 1e-3)")
+    my_plot.plot_xy()
 
-# my_plot.set_savefig(body_type+"-thrust-plot-test2.png")
-# my_plot.label_and_save()
+my_plot.set_savefig(body_type+"-thrust-plot.png")
+my_plot.label_and_save()
