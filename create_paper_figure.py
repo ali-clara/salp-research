@@ -12,7 +12,7 @@ matplotlib.rcParams['ps.fonttype'] = 42
 
 class MakePlot:
     def __init__(self, subplots=None):
-        fig, ax = plt.subplots(1,1, figsize=(9,4))
+        fig, ax = plt.subplots(1,1, figsize=(7,4))
         self.ax = ax
 
         if subplots is not None:

@@ -9,7 +9,7 @@ import keyboard
 # setup
 start_time = time.time()
 # Arduino serial port
-arduino_port = "/dev/ttyACM0"
+arduino_port = "COM6"
 # Arduino baud rate (make sure it matches)
 baud = 115200
 # serial connection
@@ -34,11 +34,11 @@ print("Exiting data collection")
 
 ############# CHANGE THESE PARAMS #############
 sensor = "force"
-watts = "6"
+watts = "8"
 ###############################################
 
 try:
-    filename = "cold/"+sensor+"/"+watts+"W/"+sensor+"-data_"+str(start_time)+".csv"    
+    filename = "cold-di-water-pulse/"+sensor+"/"+watts+"W/"+sensor+"-data_"+str(start_time)+".csv"    
     with open (filename, 'w', encoding='UTF8', newline='') as f:
         write = csv.writer(f)
         write.writerows(sensor_data)

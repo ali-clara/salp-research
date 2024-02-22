@@ -91,15 +91,32 @@ def g_to_mn(data):
     return mn
 
 if __name__ == "__main__":
+    test_folder_path = "cold-di-water\\force"
     disp_folder_path = "0.8mm\\strain"
-    force_folder_path = "26AWG\\force"
+    force_folder_path = "0.8mm\\force"
     cold_force_folder_path = "cold\\force"
 
+    test = False
     plot_strain = False
-    plot_force = False
-    compare_temperature = True
+    plot_force = True
+    compare_temperature = False
 
-    
+    if test:
+        means, stdvs, times =  load_and_compile(test_folder_path, subfolder_names=["4W", "6W", "8W"], data_name="Force (g)")
+        for i, data in enumerate(means):
+            t = times[i]
+
+            data = g_to_mn(data)
+
+            plt.plot(t, data)
+            plt.fill_between(t, data+stdvs[i], data-stdvs[i], alpha=0.5)
+
+        plt.ylabel("Force (mN)")
+        plt.xlabel("Time (s)")
+        plt.legend()
+        plt.show()
+
+
     if plot_strain:
         disp_mean, disp_stdv, times = load_and_compile(disp_folder_path, subfolder_names=["1W", "2W", "3W", "4W"], data_name="Linear displacement (mm)")
         strain_mean, strain_stdv = disp_to_strain(disp_mean, disp_stdv, l_0=np.array([137.1, 135.8, 149.7, 134.6]))
@@ -126,30 +143,40 @@ if __name__ == "__main__":
             t = times[i]
             force = g_to_mn(force)
             force_stdv = g_to_mn(force_stdvs[i])
-            my_plot.set_xy(t, force)
+            my_plot.set_xy(t-15, force)
             my_plot.set_stdev(force_stdv)
             my_plot.set_data_labels(str(i+1)+"W")
             my_plot.set_axis_labels("Time (s)", "Force (mN)")
-            my_plot.set_xlim([0,60])
+            my_plot.set_xlim([0,50])
             my_plot.plot_xy()
 
-        my_plot.set_savefig("paper-force-data.pdf")
+        my_plot.set_savefig("paper-force-data.png")
         my_plot.label_and_save()
 
     if compare_temperature:
-        norm_means, norm_stdvs, times =  load_and_compile(force_folder_path, subfolder_names=["3W"], data_name="Force (g)")
-        cold_means, cold_stdvs, cold_times = load_and_compile(cold_force_folder_path, subfolder_names=["6W"], data_name="Force (g)")
+        norm_means, norm_stdvs, times =  load_and_compile("26AWG\\force", subfolder_names=["3W"], data_name="Force (g)")
+        oil_means, oil_stdvs, cold_times = load_and_compile("cold-oil\\force", subfolder_names=["6W"], data_name="Force (g)")
+        water_means, water_stdvs, water_times = load_and_compile("cold-di-water\\force", subfolder_names=["8W"], data_name="Force (g)")
         for i, norm_force in enumerate(norm_means):
             t = times[i]
-            ct = cold_times[i]
+            ot = cold_times[i]
+            wt = water_times[i]
+
             norm_force = g_to_mn(norm_force)
             norm_std = g_to_mn(norm_stdvs[i])
-            cold_force = g_to_mn(cold_means[i])
-            cold_std = g_to_mn(cold_stdvs[i])
+
+            cold_force = g_to_mn(oil_means[i])
+            cold_std = g_to_mn(oil_stdvs[i])
+
+            water_force = g_to_mn(water_means[i])
+            water_std = g_to_mn(water_stdvs[i])
 
             plt.plot(t, norm_force, label="3W Room Temp")
-            plt.plot(ct+0.3, cold_force+310, label="6W Cold Oil")
+            plt.plot(ot, cold_force, label="6W Cold Oil")
+            plt.plot(wt, water_force, label="8W Cold DI Water")
 
+        plt.ylabel("Force (mN)")
+        plt.xlabel("Time (s)")
         plt.legend()
         plt.show()
         
