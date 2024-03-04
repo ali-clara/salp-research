@@ -33,12 +33,13 @@ print("Exiting data collection")
 # save data to csv
 
 ############# CHANGE THESE PARAMS #############
+directory = "cold-di-water-pulse-spring/spring2/"
 sensor = "force"
 watts = "8"
 ###############################################
 
 try:
-    filename = "cold-di-water-pulse/"+sensor+"/"+watts+"W/"+sensor+"-data_"+str(start_time)+".csv"    
+    filename = directory+sensor+"/"+watts+"W/"+sensor+"-data_"+str(start_time)+".csv"    
     with open (filename, 'w', encoding='UTF8', newline='') as f:
         write = csv.writer(f)
         write.writerows(sensor_data)

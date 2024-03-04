@@ -108,6 +108,7 @@ def shell_volume(front_area, t, dia_interp_list, t_interp_list, pulse_type, plot
     # std = np.load()
 
     maj_diameter = front_area / l # mm
+    print(f"major diameter {maj_diameter}")
     min_index = t_interp_list[-1]
 
     # interpolate to find the minor diameter across the contraction phase
@@ -134,7 +135,7 @@ def shell_volume(front_area, t, dia_interp_list, t_interp_list, pulse_type, plot
 
 my_plot = MakePlot()
 path_names = ["all-on", "pulse-hold", "pulse-release"]
-body_type = "tube"
+body_type = "shell"
 
 legend_names = ["Activated simultaneously", "Activated in sequence", "Activated and released"]
 
@@ -145,8 +146,8 @@ for i, name in enumerate(path_names):
     front_area = np.load("data/averages/"+body_type+"_"+name+"_avg.npy") #mm2
     t = np.load("data/averages/"+body_type+"_"+name+"_t.npy")
     
-    # vol_dot, a0 = shell_volume(front_area, t, dia_interp_list[i], t_interp_list[i], pulse_type=body_type+"_"+name, plot=False) #mm3/s, mm2
-    vol_dot, a0 = tube_volume(front_area, t, pulse_type=body_type+"_"+name, plot=False) #mm3/s, mm2
+    vol_dot, a0 = shell_volume(front_area, t, dia_interp_list[i], t_interp_list[i], pulse_type=body_type+"_"+name, plot=False) #mm3/s, mm2
+    # vol_dot, a0 = tube_volume(front_area, t, pulse_type=body_type+"_"+name, plot=False) #mm3/s, mm2
      
     vol_dot_m3 = mm3_to_m3(vol_dot)
     a0_m2 = mm2_to_m2(a0)

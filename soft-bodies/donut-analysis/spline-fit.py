@@ -16,6 +16,29 @@ def nan_interpolation(y):
 
     return y
 
+def fit_spline(x, y, s, derivative=0):
+    spline = splrep(x, y, s)
+    spline_fit = splev(x, spline, der=derivative)
+    return spline_fit
+
+def thrust_from_dvdt(dvdt, a0, rho=1000, c0=0.6):
+    """volume: m3. a0: m"""
+    thrust = rho*dvdt**2 / (c0 * a0) # N
+    return thrust
+
+def volume_spline(cross_sec_area, h, t):
+    """cross_sec_area: mm^2. h: mm
+        volume out: m3, m3/s"""
+
+    area_m2 = cross_sec_area / 1e6
+    h_m = h / 1e3
+    volume_m3 = area_m2*h_m
+
+    volume_spline_m3 = fit_spline(t, volume_m3, s=len(t))
+    vol_dot_spline_m3s = fit_spline(t, volume_m3, s=len(t), derivative=1)
+
+    return volume_spline_m3, vol_dot_spline_m3s
+
 ### load the file of choice
 # area = np.load("donut-analysis/data/12-15-23/area_4W.npy") # mm^2
 # area = np.load("donut-analysis/data/8-31-23/area_avg.npy")
@@ -25,31 +48,19 @@ def nan_interpolation(y):
 # x = np.load("donut-analysis/data/8-31-23/t_avg.npy")
 # stdv = np.load("donut-analysis/data/8-31-23/area_stdv.npy")
 
-area = np.load("average-donut-circumference.npy")
-x = np.arange(0, len(area)/60, 1/60)
-# x = np.arange(0, len(area)*0.2, 0.2)
+if __name__ == "__main__":
 
-# fs = 30
-# initial_avg = np.mean(area[0:5*fs])
-# area[0:5*fs] = initial_avg # mm^2
-area_m = area / 1e6 # m^2
+    path = "origami/data/spring_tests/"
+    y = np.load(path+"y_filtered.npy")
+    x = np.load(path+"t.npy")
+    # x = np.arange(0, len(area)*0.2, 0.2)
 
-h = 1 # mm
-volume = area * h # mm^3
-
-volume_spline = splrep(x, volume, s=len(x)/250)
-vol_spline_fit = splev(x, volume_spline) # mm^3
-# vol_spline_fit_ml = vol_spline_fit / 1e3
-
-vol_dot = splev(x, volume_spline, der=1) # mm^3/s
-print(min(vol_dot))
+    
 vol_dot_ml = vol_dot / 1e3 # ml/s
 vol_dot_m = vol_dot / 1e9 # m^3/s
 
-rho = 1000  # kg/m^3
-c0 = 0.6    # dimensionless
-thrust = rho*vol_dot_m**2 / (c0 * area_m) # N
-thrust_mn = thrust * 1e3 # mN
+thrust_n = thrust_from_dvdt(vol_dot_m, area_m) # N
+thrust_mn = thrust_n * 1e3 # mN
 
 fig, ax = plt.subplots(5,1)
 ax[0].plot(x, area)

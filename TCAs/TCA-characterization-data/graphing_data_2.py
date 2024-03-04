@@ -39,7 +39,7 @@ def create_time_vector(data, recording_frequency=0.2):
     t = np.arange(0, t_len*recording_frequency, recording_frequency)
     return t
 
-def load_and_compile(path, subfolder_names, data_name):
+def load_and_compile(path, subfolder_names, data_name, plot=True):
     data_means = []
     data_stdvs = []
     times = []
@@ -56,10 +56,13 @@ def load_and_compile(path, subfolder_names, data_name):
             except:
                 time = create_time_vector(response)
                 subfolder_times.append(time)
+
+            if plot:
+                plt.plot(time, response)
         
         # squish data and timestamp into a big np array
         # there's gotta be a way to do this that's not a for loop but I can't find it
-        big_data = np.empty(shape=(2, len(subfolder_data)), dtype=np.ndarray)
+        big_data = np.empty(shape=(2, len(subfolder_data)), dtype=object)
         for i, data in enumerate(subfolder_data):
             big_data[0,i] = subfolder_times[i]
             big_data[1,i] = data
@@ -67,14 +70,15 @@ def load_and_compile(path, subfolder_names, data_name):
         # trim it all the same length
         trimmed_big_data = trim_data(big_data)
         # take the mean and standard deviation
-        mean, stdv = average_data(trimmed_big_data[1:][0])
+        mean, stdv = average_data(trimmed_big_data[1:])
         data_means.append(mean)
         data_stdvs.append(stdv)
         # is this kosher?
         time = np.mean(trimmed_big_data[0:][0])
         times.append(time)
 
-    return np.array(data_means), np.array(data_stdvs), np.array(times)
+    plt.show()
+    return np.array(data_means, dtype=object), np.array(data_stdvs, dtype=object), np.array(times, dtype=object)
 
 def disp_to_strain(mean_array, stdv_array, l_0):
     """Takes in np arrays of delX (mean + stdv) and original length and converts to strain"""
@@ -91,25 +95,33 @@ def g_to_mn(data):
     return mn
 
 if __name__ == "__main__":
-    test_folder_path = "cold-di-water\\force"
+    test_folder_path = "cold-di-water-pulse-spring\\spring2\\force"
     disp_folder_path = "0.8mm\\strain"
     force_folder_path = "0.8mm\\force"
     cold_force_folder_path = "cold\\force"
 
-    test = False
+    test = True
     plot_strain = False
-    plot_force = True
+    plot_force = False
     compare_temperature = False
 
+    data_type = "Force (g)"
+
     if test:
-        means, stdvs, times =  load_and_compile(test_folder_path, subfolder_names=["4W", "6W", "8W"], data_name="Force (g)")
+        means, stdvs, times =  load_and_compile(test_folder_path, subfolder_names=["6W", "8W"], data_name=data_type)
         for i, data in enumerate(means):
             t = times[i]
 
-            data = g_to_mn(data)
+            if data_type == "Force (g)":
+                data = g_to_mn(data)
+                stdv = g_to_mn(stdvs[i])
+            elif data_type == "Linear displacement (mm)":
+                data, sdtv = disp_to_strain(data, stdvs[i], l0=None) # <-- fill in l0, otherwise will throw error
+            else:
+                print("Wrong data type")
 
             plt.plot(t, data)
-            plt.fill_between(t, data+stdvs[i], data-stdvs[i], alpha=0.5)
+            plt.fill_between(t, data+stdv, data-stdv, alpha=0.5)
 
         plt.ylabel("Force (mN)")
         plt.xlabel("Time (s)")

@@ -1,0 +1,10 @@
+2/28/24 happy not-last-day-of-february day!
+
+Took spring videos + force data today. Order:
+- spring1_stiffer, 6W started power at 10 sec and video at 15 sec
+- spring1_stiffer, 6W
+- spring2, 6W
+- spring2, 6W, started power and video at 10sec
+- spring2, 6W
+- spring2, 8W
+

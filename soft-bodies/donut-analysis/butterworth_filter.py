@@ -30,8 +30,17 @@ def get_frequency_response(cutoff, fs, order):
 
     plt.show()
 
+def nan_interpolation(y):
+    """Helper function to interpolate NAN values
+    https://stackoverflow.com/questions/6518811/interpolate-nan-values-in-a-numpy-array"""
+    nans = np.isnan(y)
+    x = lambda z: z.nonzero()[0]
+    y[nans]= np.interp(x(nans), x(~nans), y[~nans])
+
+    return y
+
 def center_data_about_zero(data):
-    bias_term = np.mean(data[0:40])
+    bias_term = np.mean(data[0:10])
     data = data - bias_term
     return data, bias_term
 
@@ -40,7 +49,8 @@ def return_data_to_offset(data, bias_term):
     return data
 
 def do_filtering_process(data, cutoff, fs, order, plot_freq_response=False):
-    data_zeroed, data_bias = center_data_about_zero(data)
+    data_interp = nan_interpolation(data)
+    data_zeroed, data_bias = center_data_about_zero(data_interp)
     data_filtered = butter_lowpass_filter(data_zeroed, cutoff, fs, order)
     data_filtered = return_data_to_offset(data_filtered, data_bias)
 
@@ -51,45 +61,34 @@ def do_filtering_process(data, cutoff, fs, order, plot_freq_response=False):
     
 if __name__ == "__main__":
 
-    fs = 60.0       # sample rate, Hz
+    fs = 30.0       # sample rate, Hz
 
     # load data
     file_name = "avg" 
     file_date = "8-31-23"
     # circ = np.load("data/"+file_date+"/circ_"+file_name+".npy")
-    area = np.load("data/"+file_date+"/area_"+file_name+".npy")
-    t = np.load("data/"+file_date+"/t_"+file_name+".npy")
-
-    # order = 2
-    # fs = 30.0
-    # cutoff = 0.07
-
-    # circumference
-    # order = 1   # order of the filter, lower is a tighter fit
-    # cutoff = 0.1    # desired cutoff frequency of the filter, Hz
-    # filtered_circ = do_filtering_process(circ, cutoff, fs, order)
+    path = "origami/data/spring_tests/"
+    y = np.load(path+"y_dist.npy")
+    x = np.load(path+"t.npy")
 
     # area
-    order = 1
-    cutoff = 0.13
-    filtered_area = do_filtering_process(area, cutoff, fs, order)
+    order = 2
+    cutoff = 0.2
+    filtered_y = do_filtering_process(y, cutoff, fs, order)
 
-    fig, ax = plt.subplots(2,1)
-    # ax[0].plot(t, circ, '.', label='raw data')
-    # ax[0].plot(t, filtered_circ, '-', color="tab:red", linewidth=2, label='filtered data')
-    # ax[0].set_xlabel('Time [sec]')
-    # ax[0].legend()
-
-    ax[1].plot(t, area, '.', label='raw data')
-    ax[1].plot(t, filtered_area, '-', color="tab:red", linewidth=2, label='filtered data')
-    ax[1].set_xlabel('Time [sec]')
-    ax[1].legend()
+    fig, ax = plt.subplots()
+    ax.plot(x, y, label='raw data')
+    ax.plot(x-1, filtered_y, color="tab:red", linewidth=2, label='filtered data')
+    ax.set_xlabel('Time [sec]')
+    ax.legend()
 
     plt.tight_layout()
     plt.show()
 
+    np.save(path+"y_filtered.npy", filtered_y)
+
     # np.save("data/"+file_date+"/circ_"+file_name+"_filtered.npy", filtered_circ)
-    np.save("data/"+file_date+"/area_"+file_name+"_filtered.npy", filtered_area)
+    # np.save("data/"+file_date+"/area_"+file_name+"_filtered.npy", filtered_area)
 
     # data_to_export = list(zip(*[t, data, filtered_data, area]))
     # columns = ["time(sec)", "Raw circumference (mm)", "Filtered circumference (mm)", "Raw Area (mm^2)"]
