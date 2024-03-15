@@ -95,7 +95,7 @@ def g_to_mn(data):
     return mn
 
 if __name__ == "__main__":
-    test_folder_path = "cold-di-water-pulse-spring\\spring2\\force"
+    test_folder_path = "di-water-spring\\force"
     disp_folder_path = "0.8mm\\strain"
     force_folder_path = "0.8mm\\force"
     cold_force_folder_path = "cold\\force"
@@ -108,7 +108,7 @@ if __name__ == "__main__":
     data_type = "Force (g)"
 
     if test:
-        means, stdvs, times =  load_and_compile(test_folder_path, subfolder_names=["6W", "8W"], data_name=data_type)
+        means, stdvs, times =  load_and_compile(test_folder_path, subfolder_names=["4W", "6W", "8W"], data_name=data_type)
         for i, data in enumerate(means):
             t = times[i]
 
@@ -125,7 +125,8 @@ if __name__ == "__main__":
 
         plt.ylabel("Force (mN)")
         plt.xlabel("Time (s)")
-        plt.legend()
+        plt.legend(["4W", "6W", "8W"])
+        plt.title("Room Temp Water")
         plt.show()
 
 

@@ -252,13 +252,13 @@ if __name__ == "__main__":
             subfolder_times.append(t)
 
             plt.plot(t, y_dist)
-            try:
-                np.save(f"origami\\data\\spring2\\{folder}\\ydist_{i}.npy", y_dist)
-                np.save(f"origami\\data\\spring2\\{folder}\\t_{i}.npy", t)
-            except:
-                print("you spelled something wrong")
-                np.save(f"ydist_{i}.npy", y_dist)
-                np.save(f"t_{i}.npy", t)
-            i+=1
+            # try:
+            #     np.save(f"origami\\data\\spring2\\{folder}\\ydist_{i}.npy", y_dist)
+            #     np.save(f"origami\\data\\spring2\\{folder}\\t_{i}.npy", t)
+            # except:
+            #     print("you spelled something wrong")
+            #     np.save(f"ydist_{i}.npy", y_dist)
+            #     np.save(f"t_{i}.npy", t)
+            # i+=1
 
         plt.show()

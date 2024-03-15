@@ -1,7 +1,7 @@
 import numpy as np
 import control
 import matplotlib.pyplot as plt
-plt.style.use('seaborn-deep')
+# plt.style.use('seaborn-deep')
 
 def normalize_and_trim(data, t, start, stop):
     data = data[start:stop]
@@ -78,36 +78,32 @@ def find_first_order_fit(data, t, start, stop, growth=True, ss_tol=0.01, tau_tol
     return t_out, y_out, ss_val, tau
 
 if __name__ == "__main__":
-    # data = np.load("strain-data.npy")
-    # t = np.load("time-vec.npy")
+    data = np.load("soft-bodies/origami/data/spring2/6W/average.npy")
+    t = np.load("soft-bodies/origami/data/spring2/6W/t.npy")
 
-    data = np.load("force_data.npy")
-    t = np.load("t_force.npy")
+    recording_frequency= 1 / 30
+    pulse_start_index = int(14.25 / recording_frequency)
+    # pulse_start_index = int(13.75 / recording_frequency)
+    pulse_stop_index = int(20 / recording_frequency)
 
-    data = data+100
-
-    # print(len(t))
-
-    # data = 1-data
-
-    # trim_index=85
-    trim_index = 55
-    recording_frequency=0.2
-    pulse_length=30
-
-    pulse_start_index = trim_index
-    pulse_length_index = int(pulse_length / recording_frequency)
-    pulse_stop_index = pulse_start_index+pulse_length_index
-
-    t_model, y_model, ss_val, tau, y_data, t_data, t63_index = find_first_order_fit(data, t, 
-                                                            pulse_stop_index, 260, 
-                                                            growth=False, ss_tol=5)
+    t_contract, y_contract, ss_val_contract, tau_contract = find_first_order_fit(data, t, 0, pulse_start_index, growth=True)
+    t_relax, y_relax, ss_val_relax, tau_relax = find_first_order_fit(data, t, pulse_start_index, pulse_stop_index, growth=False)
     
+    print(f"Tau contraction: {np.round(tau_contract,3)}, steady state value: {np.round(ss_val_contract,3)}")
+    print(f"Tau relaxation: {np.round(tau_relax,3)}, steady state value: {np.round(ss_val_relax,3)}")
+
     fig, ax = plt.subplots(2,1)
+    fig.tight_layout(pad=2)
+    
     ax[0].plot(t, data)
-    ax[1].plot(t_data, y_data)
-    ax[1].plot(t_model, y_model)
-    ax[1].hlines(ss_val + 1, 42, 52, color='red')
-    ax[1].vlines(t_data[t63_index], 0, 300, color='yellow')
+    ax[1].plot(t, data)
+    ax[1].plot(t_relax, y_relax)
+    ax[1].plot(t_contract, y_contract)
+    # ax[1].hlines(ss_val + 1, 42, 52, color='red')
+    # ax[1].vlines(t_data[t63_index], 0, 300, color='yellow')
+    ax[0].set_title("6W first order fit")
+    ax[1].set_xlabel("Time (sec)")
+    ax[0].set_xlim([-1, 22])
+    ax[1].set_xlim([-1, 22])
     plt.show()
 

@@ -33,10 +33,10 @@ print("Exiting data collection")
 # save data to csv
 
 ############# CHANGE THESE PARAMS #############
-directory = "cold-di-water-pulse-spring/spring2/"
+directory = "di-water-spring/"
 sensor = "force"
 watts = "8"
-###############################################
+###############################s################
 
 try:
     filename = directory+sensor+"/"+watts+"W/"+sensor+"-data_"+str(start_time)+".csv"    
