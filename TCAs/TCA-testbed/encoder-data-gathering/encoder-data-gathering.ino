@@ -36,9 +36,10 @@ void setup() {
 
   // set up serial communication and print column headers
   Serial.begin(9600);
-  Serial.print("Linear displacement (mm)");
+  Serial.print("Time (s)");
   Serial.print(",");
-  Serial.println("Time (s)");
+  Serial.println("Linear displacement (mm)");
+  
   // Serial.println("Input Signal");
 }
 
@@ -75,9 +76,11 @@ void loop() {
     rev = pulse_to_rev(enc_data);
     dist = rev_to_dist(rev);
   
-    Serial.print(dist, 4);
+    Serial.print(current_time/1000.0);
     Serial.print(",");
-    Serial.println(current_time/1000.0);
+    Serial.println(dist, 4);
+    
+    
     // Serial.println(signal_data);
   }
 }

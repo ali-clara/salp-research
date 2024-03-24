@@ -1,0 +1,2 @@
+short (20.5mm, 2ohms): 1.41V
+long (37.6mm, 3.5ohms): 1.87V

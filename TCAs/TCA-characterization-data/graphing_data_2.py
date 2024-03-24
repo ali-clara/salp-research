@@ -39,7 +39,7 @@ def create_time_vector(data, recording_frequency=0.2):
     t = np.arange(0, t_len*recording_frequency, recording_frequency)
     return t
 
-def load_and_compile(path, subfolder_names, data_name, plot=True):
+def load_and_compile(path, subfolder_names, y_data_name, x_data_name, plot=True):
     data_means = []
     data_stdvs = []
     times = []
@@ -48,10 +48,10 @@ def load_and_compile(path, subfolder_names, data_name, plot=True):
         subfolder_times = []
         for file in glob.glob(path+"\\"+str(folder)+"\\*.csv"):
             data = pd.read_csv(file)
-            response = data[data_name].to_numpy()
+            response = data[y_data_name].to_numpy()
             subfolder_data.append(response)
             try:
-                time = data["Time (s)"].to_numpy()
+                time = data[x_data_name].to_numpy()
                 subfolder_times.append(time)
             except:
                 time = create_time_vector(response)
@@ -59,6 +59,8 @@ def load_and_compile(path, subfolder_names, data_name, plot=True):
 
             if plot:
                 plt.plot(time, response)
+                plt.xlabel(x_data_name)
+                plt.ylabel(y_data_name)
         
         # squish data and timestamp into a big np array
         # there's gotta be a way to do this that's not a for loop but I can't find it
@@ -91,11 +93,11 @@ def g_to_mn(data):
     """ Convert data to milinewtons
     Args
         data - list of force values (g)"""
-    mn = np.array(data) * 9.81
+    mn = np.array(data.tolist(), dtype=float) * 9.81
     return mn
 
 if __name__ == "__main__":
-    test_folder_path = "di-water-spring\\force"
+    test_folder_path = "characterization-length\\force-length"
     disp_folder_path = "0.8mm\\strain"
     force_folder_path = "0.8mm\\force"
     cold_force_folder_path = "cold\\force"
@@ -106,27 +108,31 @@ if __name__ == "__main__":
     compare_temperature = False
 
     data_type = "Force (g)"
+    x_axis = "Time (sec)"
 
     if test:
-        means, stdvs, times =  load_and_compile(test_folder_path, subfolder_names=["4W", "6W", "8W"], data_name=data_type)
+        means, stdvs, times =  load_and_compile(test_folder_path, subfolder_names=["0.5A"], y_data_name=data_type, x_data_name=x_axis)
         for i, data in enumerate(means):
             t = times[i]
 
+            data = np.array(data.tolist(), dtype=float)
+            stdv = np.array(stdvs[i].tolist(), dtype=float)
+            
             if data_type == "Force (g)":
                 data = g_to_mn(data)
                 stdv = g_to_mn(stdvs[i])
             elif data_type == "Linear displacement (mm)":
-                data, sdtv = disp_to_strain(data, stdvs[i], l0=None) # <-- fill in l0, otherwise will throw error
+                data, stdv = disp_to_strain(data, stdvs[i], l0=None) # <-- fill in l0, otherwise will throw error
             else:
-                print("Wrong data type")
+                print("Plotting raw data")
 
             plt.plot(t, data)
-            plt.fill_between(t, data+stdv, data-stdv, alpha=0.5)
+            # plt.fill_between(t, data+stdv, data-stdv, alpha=0.5)
 
         plt.ylabel("Force (mN)")
-        plt.xlabel("Time (s)")
-        plt.legend(["4W", "6W", "8W"])
-        plt.title("Room Temp Water")
+        plt.xlabel("Time (sec)")
+        # plt.legend(["4W", "6W", "8W"])
+        # plt.title("Spring response, unpowered")
         plt.show()
 
 

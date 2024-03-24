@@ -29,6 +29,7 @@
 // Import all the things
 #include "HX711.h"  // load cell
 #include <Adafruit_MAX31856.h>  // thermocouple
+#include <string.h>
 
 HX711 scale;
 Adafruit_MAX31856 maxthermo = Adafruit_MAX31856(10, 11, 12, 13);
@@ -47,6 +48,7 @@ unsigned long previous_time_signal = millis();
 unsigned long previous_time_load = millis();
 unsigned long current_time;
 
+
 void setup() {
   // Set up signal pin
   pinMode(signal_pin, OUTPUT);
@@ -54,7 +56,7 @@ void setup() {
   signal_data = 0;
 
   // Set up serial monitor
-  Serial.begin(115200);
+  Serial.begin(9600);
   while (!Serial) delay(10);
 
   // Set up load cell
@@ -75,9 +77,9 @@ void setup() {
   // Print column headers
   Serial.print("Time (s)");
   Serial.print(",");
-  Serial.print("Force (g)");
-  Serial.print(",");
-  Serial.println("Ambient temperature (c)");
+  Serial.println("Force (g)");
+  // Serial.print(",");
+  // Serial.println("Ambient temperature (c)");
 }
 
 void loop() {
@@ -109,9 +111,9 @@ void loop() {
 
     Serial.print(current_time/1000.0);
     Serial.print(",");
-    Serial.print(scale.get_units(), 4);
-    Serial.print(",");
-    Serial.println(maxthermo.readThermocoupleTemperature(), 4);
+    Serial.println(scale.get_units(), 4);
+    // Serial.print(",");
+    // Serial.println(maxthermo.readThermocoupleTemperature(), 4);
     
     // Serial.print(",");
     // Serial.print(current_time);

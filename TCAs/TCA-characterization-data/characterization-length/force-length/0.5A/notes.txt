@@ -1,0 +1,3 @@
+TCA 3.5ohms
+Starting length (post 5g tension, pre any tests): approx 41mm long
+Testing at 1.75V

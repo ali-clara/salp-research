@@ -11,7 +11,7 @@ start_time = time.time()
 # Arduino serial port
 arduino_port = "COM6"
 # Arduino baud rate (make sure it matches)
-baud = 115200
+baud = 9600
 # serial connection
 ser = serial.Serial(arduino_port, baud)
 print(f"Connected to Arduino port {arduino_port}")
@@ -33,13 +33,15 @@ print("Exiting data collection")
 # save data to csv
 
 ############# CHANGE THESE PARAMS #############
-directory = "di-water-spring/"
+directory = "characterization-length/force-length/"
 sensor = "force"
-watts = "8"
-###############################s################
+watts = "0.5A"
+which = "springA"
+###############################################
 
 try:
-    filename = directory+sensor+"/"+watts+"W/"+sensor+"-data_"+str(start_time)+".csv"    
+    # filename = directory+sensor+"/"+watts+"W/"+sensor+"-data_"+str(start_time)+".csv"
+    filename = directory+watts+"/"+which+"_"+str(start_time)+".csv"    
     with open (filename, 'w', encoding='UTF8', newline='') as f:
         write = csv.writer(f)
         write.writerows(sensor_data)
